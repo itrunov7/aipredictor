@@ -1,7 +1,0 @@
-{
-  "version": 2,
-  "env": {
-    "FMP_API_KEY": "@fmp_api_key",
-    "OPENAI_API_KEY": "@openai_api_key"
-  }
-} 
