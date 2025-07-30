@@ -93,21 +93,32 @@ export function ClientOnlyStockCards() {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 mb-16">
-        {FEATURED_SYMBOLS.map((symbol, index) => (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+        {FEATURED_SYMBOLS.slice(0, 4).map((symbol, index) => (
           <div
             key={symbol}
             className="animate-fade-in-up"
             style={{ animationDelay: `${index * 150}ms` }}
           >
-            <div className="glass-card p-6 h-96">
-              <div className="animate-pulse">
-                <div className="h-6 bg-gray-200 rounded mb-4"></div>
-                <div className="h-8 bg-gray-200 rounded mb-4"></div>
+            <div className="bg-white dark:bg-gray-900 rounded-3xl p-8 shadow-sm border border-gray-100 dark:border-gray-800 h-96">
+              <div className="animate-pulse space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-lg w-24"></div>
+                  <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-16"></div>
+                </div>
+                <div>
+                  <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-lg mb-2"></div>
+                  <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-32"></div>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
+                  <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
+                  <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
+                </div>
                 <div className="space-y-3">
-                  <div className="h-4 bg-gray-200 rounded"></div>
-                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
                 </div>
               </div>
             </div>
@@ -119,30 +130,32 @@ export function ClientOnlyStockCards() {
 
   if (error) {
     return (
-      <div className="text-center py-12">
-        <div className="text-red-600 mb-4">
-          <svg className="w-12 h-12 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <h3 className="text-lg font-semibold">Failed to Load Stock Data</h3>
-          <p className="text-sm text-gray-600 mt-2">{error}</p>
+      <div className="text-center py-16">
+        <div className="bg-red-50 dark:bg-red-900/20 rounded-3xl p-8 max-w-md mx-auto">
+          <div className="text-red-600 dark:text-red-400">
+            <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h3 className="text-xl font-semibold mb-2">Unable to Load Market Data</h3>
+            <p className="text-sm text-red-500 dark:text-red-400 mb-6">{error}</p>
+          </div>
+          <button 
+            onClick={() => window.location.reload()}
+            className="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
+          >
+            Try Again
+          </button>
         </div>
-        <button 
-          onClick={() => window.location.reload()}
-          className="btn-primary"
-        >
-          Retry
-        </button>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mb-16">
-      {stocks.map((stock, index) => (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+      {stocks.slice(0, 4).map((stock, index) => (
         <div
           key={stock.symbol}
-          className="animate-fade-in-up min-w-0"
+          className="animate-fade-in-up"
           style={{ animationDelay: `${index * 150}ms` }}
         >
           <EnhancedStockCard data={stock} />
