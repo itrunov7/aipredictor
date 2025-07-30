@@ -93,8 +93,8 @@ export function ClientOnlyStockCards() {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-        {FEATURED_SYMBOLS.slice(0, 4).map((symbol, index) => (
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
+        {FEATURED_SYMBOLS.map((symbol, index) => (
           <div
             key={symbol}
             className="animate-fade-in-up"
@@ -151,8 +151,8 @@ export function ClientOnlyStockCards() {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-      {stocks.slice(0, 4).map((stock, index) => (
+    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
+      {stocks.map((stock, index) => (
         <div
           key={stock.symbol}
           className="animate-fade-in-up"
