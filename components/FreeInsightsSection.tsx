@@ -1,23 +1,182 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ClientOnlyStockCards } from './ClientOnlyStockCards';
 import { FeedbackForm } from './FeedbackForm';
+import { 
+  CalendarDaysIcon, 
+  ClockIcon, 
+  ArrowPathIcon,
+  SparklesIcon,
+  CheckCircleIcon 
+} from '@heroicons/react/24/outline';
 
 export function FreeInsightsSection() {
   const [isFeedbackFormOpen, setIsFeedbackFormOpen] = useState(false);
+  const [featuredCompanies, setFeaturedCompanies] = useState<string[]>([]);
+  const [lastRotation, setLastRotation] = useState<string>('');
+  const [nextRotation, setNextRotation] = useState<string>('');
+
+  // Fetch today's featured companies and rotation info
+  useEffect(() => {
+    const fetchRotationInfo = async () => {
+      try {
+        const response = await fetch('/api/scheduler/status');
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.data) {
+            setFeaturedCompanies(result.data.currentFeaturedCompanies || []);
+            setLastRotation(result.data.lastRun || new Date().toISOString());
+            
+            // Calculate next rotation (next day at 6 AM EST)
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(6, 0, 0, 0); // 6 AM EST
+            setNextRotation(tomorrow.toISOString());
+          }
+        }
+      } catch (error) {
+        console.log('Could not fetch rotation info:', error);
+        // Fallback to default companies
+        setFeaturedCompanies(['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA']);
+        setLastRotation(new Date().toISOString());
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(6, 0, 0, 0);
+        setNextRotation(tomorrow.toISOString());
+      }
+    };
+
+    fetchRotationInfo();
+  }, []);
+
+  const formatTimeUntilNext = () => {
+    if (!nextRotation) return '24 hours';
+    
+    const now = new Date();
+    const next = new Date(nextRotation);
+    const diffMs = next.getTime() - now.getTime();
+    const diffHours = Math.ceil(diffMs / (1000 * 60 * 60));
+    
+    if (diffHours <= 1) return 'Soon';
+    if (diffHours >= 24) return '24 hours';
+    return `${diffHours} hours`;
+  };
+
+  const formatLastUpdated = () => {
+    if (!lastRotation) return 'Today';
+    
+    const updated = new Date(lastRotation);
+    const now = new Date();
+    const diffMs = now.getTime() - updated.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    
+    if (diffHours < 1) return 'Just now';
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return 'Today';
+  };
+
   return (
     <section className="py-16 bg-white dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            Today's Free Insights
+            Today's Featured Companies
           </h2>
           <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-            See real AI-powered predictions for top S&P 500 stocks. Each analysis uses 10+ data sources 
-            to provide transparent, confidence-scored forecasts.
+            Fresh AI-powered analysis for a curated selection of S&P 500 stocks. 
+            <span className="font-semibold text-blue-600 dark:text-blue-400"> New companies every day.</span>
           </p>
+        </div>
+
+        {/* Apple-style Daily Rotation Indicator */}
+        <div className="max-w-4xl mx-auto mb-12">
+          <div className="bg-gradient-to-r from-blue-50 via-purple-50 to-blue-50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800 rounded-3xl p-6 border border-blue-100 dark:border-gray-700 shadow-lg backdrop-blur-sm">
+            
+            {/* Header with rotation icon */}
+            <div className="flex items-center justify-center mb-6">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+                  <ArrowPathIcon className="w-5 h-5 text-white" />
+                </div>
+                <div className="text-center">
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                    Daily Company Rotation
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Smart algorithm selects 5 companies every 24 hours
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Today's Companies */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              {/* Current Companies */}
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+                <div className="flex items-center space-x-2 mb-3">
+                  <CheckCircleIcon className="w-5 h-5 text-green-500" />
+                  <span className="font-semibold text-gray-900 dark:text-white">Today's Selection</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {featuredCompanies.map((symbol, index) => (
+                    <span
+                      key={symbol}
+                      className="px-3 py-1.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-sm font-semibold rounded-full shadow-sm"
+                      style={{ animationDelay: `${index * 100}ms` }}
+                    >
+                      {symbol}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Last Updated */}
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+                <div className="flex items-center space-x-2 mb-3">
+                  <ClockIcon className="w-5 h-5 text-blue-500" />
+                  <span className="font-semibold text-gray-900 dark:text-white">Last Updated</span>
+                </div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {formatLastUpdated()}
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Data refreshed daily at 6 AM EST
+                </p>
+              </div>
+
+              {/* Next Rotation */}
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+                <div className="flex items-center space-x-2 mb-3">
+                  <CalendarDaysIcon className="w-5 h-5 text-purple-500" />
+                  <span className="font-semibold text-gray-900 dark:text-white">Next Refresh</span>
+                </div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {formatTimeUntilNext()}
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  New companies selected automatically
+                </p>
+              </div>
+            </div>
+
+            {/* Feature Highlights */}
+            <div className="flex flex-wrap items-center justify-center gap-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+                <SparklesIcon className="w-4 h-4 text-blue-500" />
+                <span>30-company rotation pool</span>
+              </div>
+              <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span>Real-time market data</span>
+              </div>
+              <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+                <ArrowPathIcon className="w-4 h-4 text-purple-500" />
+                <span>Sector-balanced selection</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Stock Cards with improved responsive layout */}

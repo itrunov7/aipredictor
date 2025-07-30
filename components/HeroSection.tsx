@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ChartBarIcon, SparklesIcon, ArrowTrendingUpIcon as TrendingUpIcon } from '@heroicons/react/24/outline';
+import { ChartBarIcon, SparklesIcon, ArrowTrendingUpIcon as TrendingUpIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { ArrowTrendingUpIcon, ArrowTrendingDownIcon } from '@heroicons/react/24/solid';
 import { FeedbackForm } from './FeedbackForm';
 import { useApp } from '@/contexts/AppContext';
@@ -180,7 +180,7 @@ export function HeroSection() {
 
           {/* Trust Indicators */}
           <div className="text-center animate-fade-in-up">
-            <p className="text-sm text-gray-500 mb-4">100% Free Daily Insights • Help us build the best product for traders</p>
+            <p className="text-sm text-gray-500 mb-4">100% Free Daily Insights • New Companies Every Day • Help us build the best product for traders</p>
             <div className="flex items-center justify-center space-x-8 text-gray-400">
               <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
@@ -191,8 +191,8 @@ export function HeroSection() {
                 <span className="text-sm">AI Powered</span>
               </div>
               <div className="flex items-center space-x-2">
-                <TrendingUpIcon className="w-4 h-4" />
-                <span className="text-sm">Professional Grade</span>
+                <ArrowPathIcon className="w-4 h-4" />
+                <span className="text-sm">Daily Rotation</span>
               </div>
             </div>
           </div>
