@@ -1,41 +1,34 @@
 import { NextResponse } from 'next/server';
 import { generateAIAnalysis, FinancialDataInput } from '@/lib/openai-analysis';
-import * as fs from 'fs';
-import * as path from 'path';
 
-// Cache directory for AI analysis
-const CACHE_DIR = path.join(process.cwd(), 'backend', 'cache', 'ai-analysis');
-
-// Ensure cache directory exists
-if (!fs.existsSync(CACHE_DIR)) {
-  fs.mkdirSync(CACHE_DIR, { recursive: true });
+// In-memory cache for Vercel compatibility (serverless environment)
+interface AnalysisCacheEntry {
+  analysis: string;
+  timestamp: number;
 }
 
-// Helper function to get cache file path
-function getCacheFilePath(symbol: string): string {
-  return path.join(CACHE_DIR, `${symbol.toUpperCase()}.json`);
-}
+const analysisCache = new Map<string, AnalysisCacheEntry>();
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
-// Helper function to check if cache is valid (less than 24 hours old)
-function isCacheValid(cacheFilePath: string): boolean {
-  try {
-    const stats = fs.statSync(cacheFilePath);
-    const cacheAge = Date.now() - stats.mtime.getTime();
-    const oneDay = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
-    return cacheAge < oneDay;
-  } catch (error: any) {
-    return false; // File doesn't exist or error reading it
-  }
+// Helper function to check if cache entry is valid
+function isCacheValid(entry: AnalysisCacheEntry): boolean {
+  const cacheAge = Date.now() - entry.timestamp;
+  return cacheAge < CACHE_DURATION;
 }
 
 // Helper function to read cached analysis
 function getCachedAnalysis(symbol: string): string | null {
   try {
-    const cacheFilePath = getCacheFilePath(symbol);
-    if (isCacheValid(cacheFilePath)) {
-      const cacheData = JSON.parse(fs.readFileSync(cacheFilePath, 'utf8'));
-      console.log(`Using cached AI analysis for ${symbol} (age: ${Math.round((Date.now() - new Date(cacheData.timestamp).getTime()) / (1000 * 60 * 60))}h)`);
-      return cacheData.analysis;
+    const cacheKey = symbol.toUpperCase();
+    const entry = analysisCache.get(cacheKey);
+    
+    if (entry && isCacheValid(entry)) {
+      const ageHours = Math.round((Date.now() - entry.timestamp) / (1000 * 60 * 60));
+      console.log(`Using cached AI analysis for ${symbol} (age: ${ageHours}h)`);
+      return entry.analysis;
+    } else if (entry) {
+      // Remove expired entry
+      analysisCache.delete(cacheKey);
     }
   } catch (error: any) {
     console.log(`Cache miss for ${symbol}:`, error.message);
@@ -46,13 +39,12 @@ function getCachedAnalysis(symbol: string): string | null {
 // Helper function to save analysis to cache
 function saveAnalysisToCache(symbol: string, analysis: string): void {
   try {
-    const cacheFilePath = getCacheFilePath(symbol);
-    const cacheData = {
-      symbol,
+    const cacheKey = symbol.toUpperCase();
+    const entry: AnalysisCacheEntry = {
       analysis,
-      timestamp: new Date().toISOString()
+      timestamp: Date.now()
     };
-    fs.writeFileSync(cacheFilePath, JSON.stringify(cacheData, null, 2));
+    analysisCache.set(cacheKey, entry);
     console.log(`Saved AI analysis to cache for ${symbol}`);
   } catch (error: any) {
     console.error(`Failed to save cache for ${symbol}:`, error.message);
