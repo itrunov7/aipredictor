@@ -155,7 +155,7 @@ export function EnhancedAIAnalysis({
 
       <div className="px-10 py-8 space-y-10">
         {/* Apple-style prediction cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
           {[
             { label: '24H Target', period: 'nextDay', icon: ClockIcon },
             { label: '1W Target', period: 'nextWeek', icon: CalendarDaysIcon },
@@ -165,34 +165,34 @@ export function EnhancedAIAnalysis({
             const TrendIcon = getTrendIcon(prediction.changePercent);
             
             return (
-              <div key={period} className="bg-gray-50/80 dark:bg-gray-900/40 rounded-[20px] p-6 transition-all duration-300 hover:shadow-lg hover:shadow-gray-200/50 dark:hover:shadow-gray-800/50 hover:bg-gray-100/80 dark:hover:bg-gray-800/60 border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-sm">
-                <div className="flex items-center justify-between mb-5">
+              <div key={period} className="bg-gray-50/80 dark:bg-gray-900/40 rounded-[20px] p-5 transition-all duration-300 hover:shadow-lg hover:shadow-gray-200/50 dark:hover:shadow-gray-800/50 hover:bg-gray-100/80 dark:hover:bg-gray-800/60 border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-sm">
+                <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-white dark:bg-gray-800 rounded-[14px] flex items-center justify-center shadow-sm">
-                      <Icon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                    <div className="w-9 h-9 bg-white dark:bg-gray-800 rounded-[12px] flex items-center justify-center shadow-sm">
+                      <Icon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                     </div>
-                    <span className="text-[15px] font-semibold text-gray-700 dark:text-gray-300">{label}</span>
+                    <span className="text-[14px] font-semibold text-gray-700 dark:text-gray-300">{label}</span>
                   </div>
-                  <TrendIcon className={`w-6 h-6 ${getTrendColor(prediction.changePercent)}`} />
+                  <TrendIcon className={`w-5 h-5 ${getTrendColor(prediction.changePercent)}`} />
                 </div>
                 
                 <div className="space-y-4">
-                  <div className="text-[32px] font-semibold text-gray-900 dark:text-white leading-none tracking-tight">
+                  <div className="text-[26px] font-semibold text-gray-900 dark:text-white leading-none tracking-tight">
                     {formatCurrency(prediction.price)}
                   </div>
-                  <div className={`text-[18px] font-semibold ${getTrendColor(prediction.changePercent)}`}>
+                  <div className={`text-[16px] font-semibold ${getTrendColor(prediction.changePercent)}`}>
                     {formatPercent(prediction.changePercent)}
                   </div>
-                  <div className="w-full bg-gray-200/70 dark:bg-gray-700/70 rounded-full h-3">
+                  <div className="w-full bg-gray-200/70 dark:bg-gray-700/70 rounded-full h-2.5">
                     <div 
-                      className={`h-3 rounded-full transition-all duration-700 ease-out ${
+                      className={`h-2.5 rounded-full transition-all duration-700 ease-out ${
                         prediction.confidence >= 80 ? 'bg-green-500 shadow-green-500/30' : 
                         prediction.confidence >= 60 ? 'bg-yellow-500 shadow-yellow-500/30' : 'bg-red-500 shadow-red-500/30'
                       } shadow-lg`}
                       style={{ width: `${prediction.confidence}%` }}
                     />
                   </div>
-                  <div className="text-[14px] font-medium text-gray-600 dark:text-gray-400">
+                  <div className="text-[13px] font-medium text-gray-600 dark:text-gray-400">
                     {prediction.confidence}% confidence
                   </div>
                 </div>
