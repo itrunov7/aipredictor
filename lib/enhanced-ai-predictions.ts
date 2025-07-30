@@ -101,6 +101,7 @@ export interface EnhancedPredictionResult {
     newsImpact: 'positive' | 'negative' | 'neutral';
     analystConsensus: 'bullish' | 'bearish' | 'neutral';
   };
+  sources?: any; // Comprehensive data sources for expandable sections
   evidence: {
     recentNews: Array<{
       headline: string;
@@ -414,6 +415,12 @@ CRITICAL: Base your analysis on the provided data sources. Cite specific news he
           newsImpact: parsed.newsImpact,
           analystConsensus: parsed.analystConsensus
         },
+        sources: this.generateFallbackSources(stock, data, 
+          parsed.sentiment === 'bullish' ? 1 : parsed.sentiment === 'bearish' ? -1 : 0,
+          Math.abs(stock.changesPercentage) / 100,
+          parsed.newsImpact === 'positive' ? 0.5 : parsed.newsImpact === 'negative' ? -0.5 : 0,
+          parsed.analystConsensus === 'bullish' ? 0.5 : parsed.analystConsensus === 'bearish' ? -0.5 : 0
+        ),
         evidence: {
           recentNews: (parsed.recentNewsHighlights || []).map((news: any) => ({
             headline: news.headline,
@@ -466,6 +473,9 @@ CRITICAL: Base your analysis on the provided data sources. Cite specific news he
     const nextWeekPrice = stock.price * (1 + combinedScore * 0.02);
     const nextMonthPrice = stock.price * (1 + combinedScore * 0.05);
 
+    // Generate comprehensive sources data for expandable sections
+    const fallbackSources = this.generateFallbackSources(stock, data, trend, volatility, newsScore, analystScore);
+
     return {
       symbol: stock.symbol,
       currentPrice: stock.price,
@@ -498,6 +508,7 @@ CRITICAL: Base your analysis on the provided data sources. Cite specific news he
         newsImpact: newsScore > 0 ? 'positive' : newsScore < 0 ? 'negative' : 'neutral',
         analystConsensus: analystScore > 0 ? 'bullish' : analystScore < 0 ? 'bearish' : 'neutral'
       },
+      sources: fallbackSources,
       evidence: {
         recentNews: data.news.slice(0, 3).map(news => ({
           headline: news.title,
@@ -509,7 +520,7 @@ CRITICAL: Base your analysis on the provided data sources. Cite specific news he
         analystActions: [],
         earningsHighlights: []
       },
-      reasoning: `Analysis based on available market data. ${trend > 0 ? 'Positive' : 'Negative'} momentum with ${data.news.length} news articles and ${data.priceTargets.length} analyst targets considered.`,
+      reasoning: this.generateDetailedReasoning(stock, trend, volatility, newsScore, analystScore, data),
       confidence: 70,
       lastUpdated: new Date(),
       dataQuality: {
@@ -519,6 +530,117 @@ CRITICAL: Base your analysis on the provided data sources. Cite specific news he
         hasTranscript: !!data.earningsTranscript
       }
     };
+  }
+
+  /**
+   * Generate comprehensive sources data for expandable sections
+   */
+  private generateFallbackSources(stock: StockQuote, data: ComprehensiveStockData, trend: number, volatility: number, newsScore: number, analystScore: number): any {
+    const sources: any = {};
+
+    // News Sources
+    if (data.news && data.news.length > 0) {
+      sources.newsSources = data.news.map(news => ({
+        name: news.site,
+        url: news.url,
+        date: news.publishedDate,
+        headline: news.title,
+        summary: news.text || 'No summary available.'
+      }));
+    } else {
+      sources.newsSources = [{
+        name: 'Financial Modeling Prep',
+        url: `https://site.financialmodelingprep.com/company/${stock.symbol}/news`,
+        date: new Date().toISOString(),
+        headline: 'No recent news available from FMP.',
+        summary: 'Financial Modeling Prep API failed to provide recent news.'
+      }];
+    }
+
+    // Analyst Actions
+    if (data.upgradesDowngrades && data.upgradesDowngrades.length > 0) {
+      sources.analystActions = data.upgradesDowngrades.map(action => ({
+        firm: action.gradingCompany,
+        action: action.action,
+        target: null, // UpgradeDowngrade doesn't have priceTarget, use PriceTarget data separately
+        grade: action.newGrade,
+        date: action.publishedDate
+      }));
+    } else {
+      sources.analystActions = [{
+        firm: 'Financial Modeling Prep',
+        action: 'No recent analyst actions available.',
+        target: null,
+        grade: 'N/A',
+        date: new Date().toISOString()
+      }];
+    }
+
+    // Earnings Data
+    if (data.latestEarnings) {
+      sources.earningsData = {
+        revenue: data.latestEarnings.revenue,
+        netIncome: data.latestEarnings.netIncome,
+        eps: data.latestEarnings.eps,
+        date: data.latestEarnings.date
+      };
+    } else {
+      sources.earningsData = {
+        revenue: 'N/A',
+        netIncome: 'N/A',
+        eps: 'N/A',
+        date: new Date().toISOString()
+      };
+    }
+
+    // Technical Indicators
+    if (data.profile) {
+      sources.technicalIndicators = {
+        dayLow: data.profile.dayLow,
+        dayHigh: data.profile.dayHigh,
+        yearLow: data.profile.yearLow,
+        yearHigh: data.profile.yearHigh,
+        priceAvg50: data.profile.priceAvg50,
+        priceAvg200: data.profile.priceAvg200,
+        currentPrice: data.profile.price,
+        positionIn52WeekRange: data.profile.positionIn52WeekRange
+      };
+    } else {
+      sources.technicalIndicators = {
+        dayLow: 'N/A',
+        dayHigh: 'N/A',
+        yearLow: 'N/A',
+        yearHigh: 'N/A',
+        priceAvg50: 'N/A',
+        priceAvg200: 'N/A',
+        currentPrice: 'N/A',
+        positionIn52WeekRange: 'N/A'
+      };
+    }
+
+    return sources;
+  }
+
+  /**
+   * Generate detailed reasoning for fallback prediction
+   */
+  private generateDetailedReasoning(stock: StockQuote, trend: number, volatility: number, newsScore: number, analystScore: number, data: ComprehensiveStockData): string {
+    let reasoning = `Analysis based on available market data. ${trend > 0 ? 'Positive' : 'Negative'} momentum with ${data.news.length} news articles and ${data.priceTargets.length} analyst targets considered.`;
+
+    if (data.news && data.news.length > 0) {
+      reasoning += ` News sentiment is ${newsScore > 0 ? 'positive' : newsScore < 0 ? 'negative' : 'neutral'}.`;
+    }
+    if (data.priceTargets && data.priceTargets.length > 0) {
+      reasoning += ` Analyst consensus is ${analystScore > 0 ? 'bullish' : analystScore < 0 ? 'bearish' : 'neutral'}.`;
+    }
+    if (data.latestEarnings) {
+      reasoning += ` Earnings results are ${data.latestEarnings.revenue > 0 ? 'positive' : 'negative'}.`;
+    }
+    if (data.profile) {
+      reasoning += ` Technical indicators suggest ${data.profile.positionIn52WeekRange > 50 ? 'strong bullish' : data.profile.positionIn52WeekRange < -50 ? 'strong bearish' : 'neutral'} momentum.`;
+    }
+
+    return reasoning;
   }
 
   /**
