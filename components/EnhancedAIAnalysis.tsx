@@ -93,39 +93,214 @@ export function EnhancedAIAnalysis({
     }
   };
 
-  // Parse numbered sections from AI reasoning (1., 2., 3., etc.)
-  const parseAnalysisSections = (reasoning: string) => {
+  // Enhanced parsing for detailed storytelling sections
+  const parseDetailedSections = (reasoning: string) => {
     const sections = {
-      predictions: '',
       technical: '',
       fundamental: '',
       catalysts: '',
       risks: ''
     };
 
-    // Split by numbered sections and clean up
-    const numberedSections = reasoning.split(/\n\n(?=\d+\.)/);
+    // Split by numbered sections
+    const parts = reasoning.split(/\d+\.\s+/);
     
-    numberedSections.forEach(section => {
-      const trimmedSection = section.trim();
-      
-      if (trimmedSection.match(/1\.\s*PRICE PREDICTIONS/i)) {
-        sections.predictions = trimmedSection.replace(/1\.\s*PRICE PREDICTIONS[^:]*:?\s*/i, '').trim();
-      } else if (trimmedSection.match(/2\.\s*TECHNICAL ANALYSIS/i)) {
-        sections.technical = trimmedSection.replace(/2\.\s*TECHNICAL ANALYSIS[^:]*:?\s*/i, '').trim();
-      } else if (trimmedSection.match(/3\.\s*FUNDAMENTAL/i)) {
-        sections.fundamental = trimmedSection.replace(/3\.\s*FUNDAMENTAL[^:]*:?\s*/i, '').trim();
-      } else if (trimmedSection.match(/4\.\s*MARKET CATALYSTS?/i)) {
-        sections.catalysts = trimmedSection.replace(/4\.\s*MARKET CATALYSTS?[^:]*:?\s*/i, '').trim();
-      } else if (trimmedSection.match(/5\.\s*RISK/i)) {
-        sections.risks = trimmedSection.replace(/5\.\s*RISK[^:]*:?\s*/i, '').trim();
+    for (const part of parts) {
+      const content = part.trim();
+      if (content.includes('TECHNICAL ANALYSIS') || content.includes('chart signals')) {
+        sections.technical = extractTechnicalStory(content);
+      } else if (content.includes('FUNDAMENTAL') || content.includes('valuation') || content.includes('financial')) {
+        sections.fundamental = extractFundamentalStory(content);
+      } else if (content.includes('MARKET CATALYSTS') || content.includes('news') || content.includes('events')) {
+        sections.catalysts = extractCatalystsStory(content);
+      } else if (content.includes('RISK ASSESSMENT') || content.includes('risks to watch')) {
+        sections.risks = extractRisksStory(content);
       }
-    });
+    }
 
     return sections;
   };
 
-  const sections = parseAnalysisSections(analysis.reasoning);
+  // Enhanced storytelling extractors with real data formatting
+  const extractTechnicalStory = (content: string): string => {
+    const rsiMatch = content.match(/RSI.*?(\d+\.?\d*)/i);
+    const volumeMatch = content.match(/volume.*?(\d+\.?\d*[MK]?)/i);
+    const avgVolumeMatch = content.match(/average.*?(\d+\.?\d*[MK]?)/i);
+    const trendMatch = content.match(/(upward|downward|sideways).*?momentum/i);
+    const dayAnalysisMatch = content.match(/(\d+)-day analysis/i);
+
+    let story = "📊 **Market Momentum Analysis**\n\n";
+    
+    if (rsiMatch) {
+      const rsi = parseFloat(rsiMatch[1]);
+      if (rsi > 70) {
+        story += `🔴 **Overbought Territory**: RSI sits at ${rsi}, suggesting the stock has been heavily bought and may be due for a pullback. Smart money often takes profits at these levels.\n\n`;
+      } else if (rsi < 30) {
+        story += `🟢 **Oversold Opportunity**: RSI at ${rsi} indicates heavy selling pressure has pushed the stock below fair value. This often presents buying opportunities for value investors.\n\n`;
+      } else {
+        story += `🟡 **Neutral Momentum**: RSI at ${rsi} shows balanced buying and selling pressure. The stock is trading in a stable range without extreme sentiment.\n\n`;
+      }
+    }
+
+    if (volumeMatch && avgVolumeMatch) {
+      const currentVol = volumeMatch[1];
+      const avgVol = avgVolumeMatch[1];
+      story += `📈 **Volume Analysis**: Today's ${currentVol} shares traded vs ${avgVol} average. `;
+      
+      // Extract numbers for comparison
+      const currentNum = parseFloat(currentVol.replace(/[MK]/g, ''));
+      const avgNum = parseFloat(avgVol.replace(/[MK]/g, ''));
+      
+      if (currentNum < avgNum * 0.8) {
+        story += `This 20%+ below-average volume suggests institutional investors are holding positions, creating potential for explosive moves when catalysts emerge.\n\n`;
+      } else if (currentNum > avgNum * 1.2) {
+        story += `This 20%+ above-average volume indicates heightened institutional interest and validates the current price action.\n\n`;
+      } else {
+        story += `This normal volume suggests steady, organic price discovery without unusual institutional activity.\n\n`;
+      }
+    }
+
+    if (trendMatch && dayAnalysisMatch) {
+      const trend = trendMatch[1];
+      const days = dayAnalysisMatch[1];
+      story += `📅 **${days}-Day Trend**: ${trend.charAt(0).toUpperCase() + trend.slice(1)} momentum over the past year reveals the stock's long-term trajectory and institutional sentiment shifts.\n\n`;
+    }
+
+    return story || "Technical analysis data is being processed. Please check back for detailed chart insights.";
+  };
+
+  const extractFundamentalStory = (content: string): string => {
+    const peMatch = content.match(/P\/E.*?(\d+\.?\d*)/i);
+    const sectorPeMatch = content.match(/sector.*?(\d+\.?\d*)/i);
+    const targetMatch = content.match(/target.*?\$(\d+\.?\d*)/i);
+    const currentPriceRef = currentPrice;
+
+    let story = "💰 **Valuation Deep Dive**\n\n";
+
+    if (peMatch) {
+      const pe = parseFloat(peMatch[1]);
+      const sectorPe = sectorPeMatch ? parseFloat(sectorPeMatch[1]) : null;
+      
+      story += `🏷️ **Price-to-Earnings**: ${pe}x earnings `;
+      if (sectorPe) {
+        const premium = ((pe - sectorPe) / sectorPe * 100).toFixed(1);
+        if (pe > sectorPe) {
+          story += `(${premium}% premium to sector's ${sectorPe}x). This premium suggests investors expect above-average growth or the company commands pricing power in its market.\n\n`;
+        } else {
+          story += `(${Math.abs(parseFloat(premium))}% discount to sector's ${sectorPe}x). This discount may indicate undervaluation or temporary headwinds affecting investor confidence.\n\n`;
+        }
+      } else {
+        story += `. This valuation multiple tells us how much investors are willing to pay for each dollar of annual earnings.\n\n`;
+      }
+    }
+
+    if (targetMatch) {
+      const target = parseFloat(targetMatch[1]);
+      const upside = ((target - currentPriceRef) / currentPriceRef * 100).toFixed(1);
+      
+      story += `🎯 **Analyst Consensus**: $${target} price target represents `;
+      if (parseFloat(upside) > 0) {
+        story += `${upside}% upside potential. Wall Street analysts, who model detailed financial projections, see fundamental value above current market pricing.\n\n`;
+      } else {
+        story += `${Math.abs(parseFloat(upside))}% downside risk. Professional analysts' models suggest the stock is trading above intrinsic value based on expected cash flows.\n\n`;
+      }
+    }
+
+    // Add earnings context
+    if (content.includes('earnings')) {
+      story += `📊 **Earnings Context**: Quarterly earnings reports remain the primary catalyst for fundamental revaluation. Revenue growth, margin expansion, and forward guidance drive long-term value creation.\n\n`;
+    }
+
+    return story || "Fundamental analysis is being updated with the latest financial metrics and analyst projections.";
+  };
+
+  const extractCatalystsStory = (content: string): string => {
+    const sentimentMatch = content.match(/(positive|negative|neutral).*?sources/i);
+    const newsSourceMatch = content.match(/(Market Watch|Reuters|Bloomberg|CNBC|Yahoo Finance)/gi);
+    const earningsMatch = content.match(/earnings.*?(scheduled|upcoming|no)/i);
+
+    let story = "📰 **Market Catalysts & Sentiment**\n\n";
+
+    if (sentimentMatch) {
+      const sentiment = sentimentMatch[1].toLowerCase();
+      story += `🌡️ **Sentiment Pulse**: `;
+      
+      if (sentiment === 'positive') {
+        story += `Bullish news flow is driving optimism. Positive media coverage often precedes institutional accumulation and upward price momentum.\n\n`;
+      } else if (sentiment === 'negative') {
+        story += `Bearish headlines are creating selling pressure. Negative sentiment cycles often create buying opportunities for long-term investors.\n\n`;
+      } else {
+        story += `Neutral media coverage suggests the market is in price discovery mode. This balanced sentiment often precedes significant directional moves.\n\n`;
+      }
+    }
+
+    if (newsSourceMatch && newsSourceMatch.length > 0) {
+      story += `📡 **Media Coverage**: Major financial outlets (${newsSourceMatch.join(', ')}) are actively covering developments. `;
+      story += `Broad media attention increases retail investor awareness and can amplify institutional trading activity.\n\n`;
+    }
+
+    if (content.includes('broader market movements')) {
+      story += `🌊 **Market Correlation**: Stock movements are tied to broader market sentiment. In risk-on environments, quality names often outperform, while risk-off periods create indiscriminate selling.\n\n`;
+    }
+
+    if (earningsMatch) {
+      const earningsStatus = earningsMatch[1].toLowerCase();
+      if (earningsStatus.includes('no') || earningsStatus.includes('scheduled')) {
+        story += `📅 **Earnings Calendar**: No immediate earnings catalysts on the horizon. This creates a clean technical setup where price action reflects pure supply/demand dynamics without event risk.\n\n`;
+      } else {
+        story += `📅 **Earnings Catalyst**: Upcoming earnings announcement could trigger significant volatility. Options markets typically price in 3-5% moves around earnings events.\n\n`;
+      }
+    }
+
+    // Add sector context if mentioned
+    if (content.includes('tech sector') || content.includes('technology')) {
+      story += `🖥️ **Sector Dynamics**: Technology sector performance often leads broader market cycles. Strong tech fundamentals support risk asset allocation from institutional investors.\n\n`;
+    }
+
+    return story || "Market catalyst analysis is being updated with the latest news flow and sentiment indicators.";
+  };
+
+  const extractRisksStory = (content: string): string => {
+    const sectorRiskMatch = content.match(/(tech|technology|sector).*?(resilience|risk)/i);
+    const peRiskMatch = content.match(/higher.*?P\/E.*?risk/i);
+    const analystMatch = content.match(/analyst.*?(upgrade|downgrade)/i);
+    const trendRiskMatch = content.match(/downward.*?trend.*?risk/i);
+
+    let story = "⚠️ **Risk Assessment & Mitigation**\n\n";
+
+    if (trendRiskMatch) {
+      story += `📉 **Technical Risk**: Downward price momentum creates overhead resistance levels. Previous support levels often become resistance, requiring strong catalysts to break through.\n\n`;
+    }
+
+    if (peRiskMatch) {
+      story += `💸 **Valuation Risk**: Premium valuations leave little room for execution errors. High P/E ratios require sustained earnings growth to justify current prices.\n\n`;
+    }
+
+    if (sectorRiskMatch) {
+      const context = sectorRiskMatch[0];
+      if (context.includes('resilience')) {
+        story += `🛡️ **Sector Support**: Technology sector resilience provides downside protection. Strong secular trends in digital transformation support long-term fundamentals.\n\n`;
+      } else {
+        story += `🌪️ **Sector Headwinds**: Technology sector faces rotation risks as investors rebalance portfolios. Interest rate sensitivity affects high-growth valuations.\n\n`;
+      }
+    }
+
+    if (analystMatch || content.includes('analyst') || content.includes('upgrades')) {
+      story += `🎖️ **Analyst Coverage**: Limited recent rating changes suggest analysts are waiting for clear catalysts. This creates opportunity for significant moves when new information emerges.\n\n`;
+    }
+
+    // Add market structure risks
+    story += `⚡ **Market Structure**: Options flow, algorithmic trading, and passive fund rebalancing can amplify price movements. Understanding these mechanics helps time entry and exit points.\n\n`;
+
+    // Add liquidity context
+    if (content.includes('volume') || content.includes('liquidity')) {
+      story += `💧 **Liquidity Profile**: Trading volume patterns affect execution quality. Lower volume periods may create wider bid-ask spreads but also reduce slippage on large orders.\n\n`;
+    }
+
+    return story || "Risk analysis is being calibrated with current market conditions and volatility metrics.";
+  };
+
+  const detailedSections = parseDetailedSections(analysis.reasoning);
 
   return (
     <div className="bg-white dark:bg-black rounded-[28px] shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(255,255,255,0.08)] border border-gray-200/20 dark:border-gray-800/50 overflow-hidden backdrop-blur-xl">
@@ -208,56 +383,56 @@ export function EnhancedAIAnalysis({
               id: 'technical', 
               title: 'Technical Analysis', 
               icon: ChartBarIcon, 
-              content: sections.technical,
+              content: detailedSections.technical,
               color: 'blue'
             },
             { 
               id: 'fundamental', 
               title: 'Fundamental View', 
               icon: ShieldCheckIcon, 
-              content: sections.fundamental,
+              content: detailedSections.fundamental,
               color: 'green'
             },
             { 
               id: 'catalysts', 
               title: 'Market Catalysts', 
               icon: InformationCircleIcon, 
-              content: sections.catalysts,
+              content: detailedSections.catalysts,
               color: 'purple'
             },
             { 
               id: 'risks', 
               title: 'Risk Assessment', 
               icon: ExclamationTriangleIcon, 
-              content: sections.risks,
+              content: detailedSections.risks,
               color: 'orange'
             }
-          ].map(({ id, title, icon: Icon, content, color }) => {
-            if (!content) return null;
+          ].map((section) => {
+            if (!section.content) return null;
             
-            const isExpanded = expandedSection === id;
+            const isExpanded = expandedSection === section.title;
             
             return (
-              <div key={id} className="bg-white dark:bg-gray-900/50 rounded-[20px] overflow-hidden shadow-sm border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-sm">
+              <div key={section.id} className="bg-white dark:bg-gray-900/50 rounded-[20px] overflow-hidden shadow-sm border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-sm">
                 <button
-                  onClick={() => setExpandedSection(isExpanded ? null : id)}
+                  onClick={() => setExpandedSection(isExpanded ? null : section.title)}
                   className="w-full px-7 py-6 bg-gray-50/50 dark:bg-gray-800/30 hover:bg-gray-100/70 dark:hover:bg-gray-800/50 transition-all duration-200 flex items-center justify-between group"
                 >
                   <div className="flex items-center space-x-4">
                     <div className={`w-12 h-12 rounded-[16px] flex items-center justify-center shadow-sm backdrop-blur-sm ${
-                      color === 'blue' ? 'bg-blue-100/80 dark:bg-blue-900/40' :
-                      color === 'green' ? 'bg-green-100/80 dark:bg-green-900/40' :
-                      color === 'purple' ? 'bg-purple-100/80 dark:bg-purple-900/40' :
+                      section.color === 'blue' ? 'bg-blue-100/80 dark:bg-blue-900/40' :
+                      section.color === 'green' ? 'bg-green-100/80 dark:bg-green-900/40' :
+                      section.color === 'purple' ? 'bg-purple-100/80 dark:bg-purple-900/40' :
                       'bg-orange-100/80 dark:bg-orange-900/40'
                     }`}>
-                      <Icon className={`w-6 h-6 ${
-                        color === 'blue' ? 'text-blue-600 dark:text-blue-400' :
-                        color === 'green' ? 'text-green-600 dark:text-green-400' :
-                        color === 'purple' ? 'text-purple-600 dark:text-purple-400' :
+                      <section.icon className={`w-6 h-6 ${
+                        section.color === 'blue' ? 'text-blue-600 dark:text-blue-400' :
+                        section.color === 'green' ? 'text-green-600 dark:text-green-400' :
+                        section.color === 'purple' ? 'text-purple-600 dark:text-purple-400' :
                         'text-orange-600 dark:text-orange-400'
                       }`} />
                     </div>
-                    <span className="text-[19px] font-semibold text-gray-900 dark:text-white">{title}</span>
+                    <span className="text-[19px] font-semibold text-gray-900 dark:text-white">{section.title}</span>
                   </div>
                   <ChevronDownIcon 
                     className={`w-6 h-6 text-gray-400 transition-transform duration-300 group-hover:text-gray-600 dark:group-hover:text-gray-300 ${
@@ -266,10 +441,57 @@ export function EnhancedAIAnalysis({
                   />
                 </button>
                 
-                {isExpanded && (
+                {expandedSection === section.title && section.content && (
                   <div className="px-7 py-6 bg-white dark:bg-gray-900/70 border-t border-gray-200/30 dark:border-gray-800/30">
-                    <div className="text-[16px] text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
-                      {content}
+                    <div className="text-[15px] leading-relaxed text-gray-700 dark:text-gray-300">
+                      {/* Parse and render the enhanced storytelling content */}
+                      {section.content.split('\n\n').map((paragraph, idx) => {
+                        if (!paragraph.trim()) return null;
+                        
+                        // Handle headers (lines starting with **text**)
+                        if (paragraph.includes('**') && paragraph.indexOf('**') < 5) {
+                          const headerMatch = paragraph.match(/\*\*(.*?)\*\*/);
+                          if (headerMatch) {
+                            const emoji = paragraph.substring(0, paragraph.indexOf('**')).trim();
+                            const headerText = headerMatch[1];
+                            const restContent = paragraph.substring(paragraph.indexOf('**', paragraph.indexOf('**') + 2) + 2).trim();
+                            
+                            return (
+                              <div key={idx} className="mb-4">
+                                <div className="flex items-center space-x-2 mb-2">
+                                  <span className="text-lg">{emoji}</span>
+                                  <h5 className="text-[16px] font-semibold text-gray-900 dark:text-white">
+                                    {headerText}
+                                  </h5>
+                                </div>
+                                {restContent && (
+                                  <p className="text-[14px] leading-relaxed text-gray-600 dark:text-gray-400 ml-7">
+                                    {restContent}
+                                  </p>
+                                )}
+                              </div>
+                            );
+                          }
+                        }
+                        
+                        // Handle regular paragraphs with inline formatting
+                        return (
+                          <div key={idx} className="mb-3">
+                            <p className="text-[14px] leading-relaxed">
+                              {paragraph.split(/(\*\*[^*]*\*\*)/).map((part, partIdx) => {
+                                if (part.startsWith('**') && part.endsWith('**')) {
+                                  return (
+                                    <span key={partIdx} className="font-semibold text-gray-900 dark:text-white">
+                                      {part.slice(2, -2)}
+                                    </span>
+                                  );
+                                }
+                                return <span key={partIdx}>{part}</span>;
+                              })}
+                            </p>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -279,7 +501,7 @@ export function EnhancedAIAnalysis({
         </div>
 
         {/* Fallback for unparsed content */}
-        {!sections.technical && !sections.fundamental && !sections.catalysts && !sections.risks && (
+        {!detailedSections.technical && !detailedSections.fundamental && !detailedSections.catalysts && !detailedSections.risks && (
           <div className="bg-gray-50/80 dark:bg-gray-900/40 rounded-[20px] p-7 border border-gray-200/50 dark:border-gray-700/50">
             <h4 className="text-[19px] font-semibold text-gray-900 dark:text-white mb-5">Complete Analysis</h4>
             <div className="text-[16px] text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
