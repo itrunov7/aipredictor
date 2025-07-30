@@ -104,8 +104,13 @@ export function EnhancedAIAnalysis({
       risks: ''
     };
 
-    // Split by numbered sections
-    const parts = reasoning.split(/\d+\.\s+/);
+    // Try numbered sections first, then fallback to ALL CAPS sections
+    let parts = reasoning.split(/\d+\.\s+/);
+    
+    // If numbered sections didn't work well, try ALL CAPS section headers
+    if (parts.length <= 2) {
+      parts = reasoning.split(/(?=[A-Z][A-Z\s]+:)/);
+    }
     
     for (const part of parts) {
       const content = part.trim();
