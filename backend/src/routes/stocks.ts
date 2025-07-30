@@ -158,7 +158,7 @@ router.get('/featured', async (req: Request, res: Response) => {
   
   // Check cache first - only fetch once per day
   const cachedData = cacheService.get<any>(cacheKey);
-  if (cachedData) {
+  if (cachedData && cachedData.quotes && Array.isArray(cachedData.quotes)) {
     logger.info(`✅ Using cached featured stocks (avoiding API calls)`);
     return res.json({
       success: true,
