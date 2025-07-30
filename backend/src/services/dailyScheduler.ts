@@ -68,82 +68,74 @@ class DailySchedulerService {
    */
   async runDailyUpdate(): Promise<DailyJobResult> {
     if (this.isRunning) {
-      logger.warn('Daily update already running, skipping...');
-      return {
-        success: false,
-        message: 'Update already in progress',
-        timestamp: new Date().toISOString()
-      };
+      return { success: false, message: 'Daily update already in progress', timestamp: new Date().toISOString() };
     }
 
     this.isRunning = true;
-    logger.info('🚀 Starting daily update process...');
-
+    this.lastRun = new Date();
+    const startTime = Date.now();
+    
     try {
-      const startTime = Date.now();
-      const result: DailyJobResult = {
-        success: true,
-        message: 'Daily update completed successfully',
-        timestamp: new Date().toISOString(),
-        companiesUpdated: [],
-        errors: []
-      };
+      logger.info('🚀 Starting daily update process...');
 
       // 1. Select 5 most interesting companies for today
-      const todaysCompanies = this.selectMostInterestingCompanies();
+      const todaysCompanies = this.selectTodaysCompanies();
       logger.info(`📊 Selected today's companies: ${todaysCompanies.join(', ')}`);
 
       // 2. Update cache with today's featured companies
-      cacheService.set('featured_stocks_daily', todaysCompanies);
+      cacheService.set('featured_companies_symbols', todaysCompanies);
       cacheService.set('last_company_rotation', new Date().toISOString());
+      
+      // 3. Track recently shown companies for variety
+      const recentCompanies = cacheService.get<string[]>('recent_companies') || [];
+      const updatedRecent = [...todaysCompanies, ...recentCompanies].slice(0, 20); // Keep last 20 companies
+      cacheService.set('recent_companies', updatedRecent);
 
-      // 3. Pre-fetch comprehensive data for selected companies
-      const updatePromises = todaysCompanies.map(async (symbol) => {
+      // 4. Pre-fetch comprehensive data for each selected company
+      const updatedCompanies: string[] = [];
+      const errors: string[] = [];
+
+      for (const symbol of todaysCompanies) {
         try {
           logger.info(`🔄 Pre-fetching data for ${symbol}...`);
-          await enhancedFmpApi.getComprehensiveStockData(symbol);
-          result.companiesUpdated!.push(symbol);
+          await this.updateCompanyData(symbol);
+          updatedCompanies.push(symbol);
           logger.info(`✅ Updated data for ${symbol}`);
         } catch (error: any) {
-          logger.error(`❌ Failed to update ${symbol}:`, error.message);
-          result.errors!.push(`${symbol}: ${error.message}`);
+          const errorMsg = `Failed to update ${symbol}: ${error.message}`;
+          logger.error(errorMsg);
+          errors.push(errorMsg);
         }
-      });
-
-      await Promise.allSettled(updatePromises);
-
-      // 4. Clear old cache entries if needed
-      await this.cleanupOldCache();
-
-      // 5. Store job result
-      this.lastRun = new Date();
-      this.jobHistory.push(result);
-      
-      // Keep only last 30 job results
-      if (this.jobHistory.length > 30) {
-        this.jobHistory = this.jobHistory.slice(-30);
       }
 
       const duration = Date.now() - startTime;
-      logger.info(`✅ Daily update completed in ${duration}ms. Updated ${result.companiesUpdated!.length} companies.`);
-      
-      if (result.errors!.length > 0) {
-        logger.warn(`⚠️ Some updates failed: ${result.errors!.join(', ')}`);
+      const result: DailyJobResult = {
+        success: true,
+        message: `Daily update completed in ${duration}ms. Updated ${updatedCompanies.length}/5 companies.`,
+        timestamp: new Date().toISOString(),
+        companiesUpdated: updatedCompanies,
+        errors: errors.length > 0 ? errors : undefined
+      };
+
+      this.jobHistory.push(result);
+      if (this.jobHistory.length > 10) {
+        this.jobHistory = this.jobHistory.slice(-10); // Keep last 10 results
       }
 
+      logger.info(`✅ Daily update completed: ${result.message}`);
       return result;
 
     } catch (error: any) {
-      logger.error('❌ Daily update failed:', error);
-      const errorResult: DailyJobResult = {
+      const result: DailyJobResult = {
         success: false,
         message: `Daily update failed: ${error.message}`,
         timestamp: new Date().toISOString(),
         errors: [error.message]
       };
-      
-      this.jobHistory.push(errorResult);
-      return errorResult;
+
+      this.jobHistory.push(result);
+      logger.error('❌ Daily update failed:', error);
+      return result;
 
     } finally {
       this.isRunning = false;
@@ -158,7 +150,7 @@ class DailySchedulerService {
     
     try {
       // Get current featured companies
-      const featuredCompanies = cacheService.get<string[]>('featured_stocks_daily') || this.getDefaultCompanies();
+      const featuredCompanies = cacheService.get<string[]>('featured_companies_symbols') || this.getDefaultCompanies();
       
       // Quick refresh of featured stock quotes for real-time prices
       const quotePromises = featuredCompanies.map(async (symbol) => {
@@ -179,84 +171,249 @@ class DailySchedulerService {
   }
 
   /**
-   * Select 5 most interesting companies using weighted algorithm
+   * Smart daily company selection algorithm
+   * Considers multiple factors to pick the most interesting companies
    */
-  private selectMostInterestingCompanies(): string[] {
-    const todayDate = new Date().toDateString();
-    const seedValue = this.generateSeedFromDate(todayDate);
+  private selectTodaysCompanies(): string[] {
+    const today = new Date();
+    const dayOfYear = Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
     
-    // Shuffle companies based on today's date for consistent daily selection
-    const shuffled = this.shuffleArrayWithSeed([...this.companyPool], seedValue);
+    // Create scoring system for company selection
+    const companyScores = this.companyPool.map(symbol => {
+      let score = 0;
+      let factors: string[] = [];
+      
+      // 1. Base sector rotation (changes weekly)
+      const sectorBonus = this.getSectorRotationBonus(symbol, dayOfYear);
+      score += sectorBonus.score;
+      if (sectorBonus.factor) factors.push(sectorBonus.factor);
+      
+      // 2. Volatility interest (higher volatility = more interesting)
+      const volatilityBonus = this.getVolatilityBonus(symbol);
+      score += volatilityBonus.score;
+      factors.push(volatilityBonus.factor);
+      
+      // 3. Market cap diversity (mix of large, mid, small caps)
+      const capBonus = this.getMarketCapBonus(symbol, dayOfYear);
+      score += capBonus.score;
+      factors.push(capBonus.factor);
+      
+      // 4. Earnings season proximity bonus
+      const earningsBonus = this.getEarningsBonus(symbol, today);
+      score += earningsBonus.score;
+      if (earningsBonus.factor) factors.push(earningsBonus.factor);
+      
+      // 5. Recent performance interest (momentum/contrarian plays)
+      const performanceBonus = this.getPerformanceBonus(symbol, dayOfYear);
+      score += performanceBonus.score;
+      factors.push(performanceBonus.factor);
+      
+      // 6. Day-of-week bias (different sectors perform better on different days)
+      const dayBonus = this.getDayOfWeekBonus(symbol, today.getDay());
+      score += dayBonus.score;
+      if (dayBonus.factor) factors.push(dayBonus.factor);
+      
+      // 7. Avoid recent repeats (ensure variety)
+      const varietyPenalty = this.getVarietyPenalty(symbol);
+      score -= varietyPenalty;
+      
+      return {
+        symbol,
+        score: Math.round(score * 100) / 100,
+        factors: factors.filter(f => f).join(', ')
+      };
+    });
     
-    // Weight selection based on various factors
-    const weightedCompanies = shuffled.map(symbol => ({
-      symbol,
-      weight: this.calculateCompanyWeight(symbol)
-    }));
-
-    // Sort by weight and select top 5
-    weightedCompanies.sort((a, b) => b.weight - a.weight);
-    const selected = weightedCompanies.slice(0, 5).map(c => c.symbol);
-
-    logger.info(`🎯 Company selection weights: ${weightedCompanies.slice(0, 10).map(c => `${c.symbol}:${c.weight.toFixed(2)}`).join(', ')}`);
+    // Sort by score and select top 5
+    const sortedCompanies = companyScores.sort((a, b) => b.score - a.score);
+    const selectedCompanies = sortedCompanies.slice(0, 5);
     
-    return selected;
+    // Log the selection reasoning
+    logger.info(`🎯 Company selection weights: ${sortedCompanies.slice(0, 10).map(c => `${c.symbol}:${c.score}`).join(', ')}`);
+    logger.info(`📊 Selected today's companies: ${selectedCompanies.map(c => c.symbol).join(', ')}`);
+    logger.info(`🔍 Selection factors: ${selectedCompanies.map(c => `${c.symbol}(${c.factors})`).join(' | ')}`);
+    
+    return selectedCompanies.map(c => c.symbol);
   }
-
+  
   /**
-   * Calculate interest weight for a company
+   * Sector rotation bonus based on market cycles and day of year
    */
-  private calculateCompanyWeight(symbol: string): number {
-    let weight = 1.0;
-
-    // Tech companies get higher base weight (high volatility = interesting)
-    const techCompanies = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA', 'NVDA', 'CRM'];
-    if (techCompanies.includes(symbol)) weight += 0.3;
-
-    // High market cap companies (more news coverage)
-    const megaCaps = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META', 'NVDA'];
-    if (megaCaps.includes(symbol)) weight += 0.2;
-
-    // Volatile/newsworthy companies
-    const volatileStocks = ['TSLA', 'META', 'NVDA', 'CRM', 'ORCL', 'BA', 'XOM'];
-    if (volatileStocks.includes(symbol)) weight += 0.3;
-
-    // Add some randomness for variety
-    weight += Math.random() * 0.4;
-
-    return weight;
-  }
-
-  /**
-   * Generate consistent seed from date string
-   */
-  private generateSeedFromDate(dateString: string): number {
-    let hash = 0;
-    for (let i = 0; i < dateString.length; i++) {
-      const char = dateString.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32-bit integer
+  private getSectorRotationBonus(symbol: string, dayOfYear: number): {score: number, factor?: string} {
+    const week = Math.floor(dayOfYear / 7) % 8; // 8-week rotation cycle
+    
+    const sectorMap: {[key: string]: string[]} = {
+      tech: ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA', 'NVDA', 'CRM', 'ORCL', 'ADBE'],
+      finance: ['JPM', 'BAC', 'WFC', 'GS', 'MS', 'C', 'BRK.A', 'AXP', 'V', 'MA'],
+      healthcare: ['JNJ', 'PFE', 'UNH', 'ABBV', 'BMY', 'MRK', 'CVS', 'MDT', 'TMO', 'ABT'],
+      consumer: ['WMT', 'HD', 'PG', 'KO', 'PEP', 'MCD', 'NKE', 'SBUX', 'TGT', 'COST'],
+      energy: ['XOM', 'CVX', 'COP', 'SLB', 'EOG', 'KMI', 'OKE', 'NEE', 'SO', 'DUK'],
+      industrial: ['CAT', 'BA', 'HON', 'UPS', 'LMT', 'RTX', 'DE', 'MMM', 'GE', 'FDX']
+    };
+    
+    const sectorPriority = ['tech', 'finance', 'healthcare', 'consumer', 'energy', 'industrial'];
+    const primarySector = sectorPriority[week % 6];
+    const secondarySector = sectorPriority[(week + 2) % 6];
+    
+    for (const [sector, symbols] of Object.entries(sectorMap)) {
+      if (symbols.includes(symbol)) {
+        if (sector === primarySector) {
+          return {score: 0.8, factor: `${sector}-focus`};
+        } else if (sector === secondarySector) {
+          return {score: 0.4, factor: `${sector}-secondary`};
+        }
+        return {score: 0.1};
+      }
     }
-    return Math.abs(hash);
+    return {score: 0.2};
+  }
+  
+  /**
+   * Volatility bonus - more volatile stocks are more interesting for trading
+   */
+  private getVolatilityBonus(symbol: string): {score: number, factor: string} {
+    // Simulate volatility based on symbol characteristics
+    const highVolSymbols = ['TSLA', 'NVDA', 'META', 'CRM', 'BA', 'CAT'];
+    const medVolSymbols = ['AAPL', 'GOOGL', 'AMZN', 'MSFT', 'JPM', 'GS'];
+    
+    if (highVolSymbols.includes(symbol)) {
+      return {score: 0.6, factor: 'high-vol'};
+    } else if (medVolSymbols.includes(symbol)) {
+      return {score: 0.3, factor: 'med-vol'};
+    } else {
+      return {score: 0.1, factor: 'low-vol'};
+    }
+  }
+  
+  /**
+   * Market cap diversity bonus
+   */
+  private getMarketCapBonus(symbol: string, dayOfYear: number): {score: number, factor: string} {
+    const megaCap = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA', 'NVDA'];
+    const largeCap = ['JPM', 'JNJ', 'WMT', 'PG', 'HD', 'BAC', 'XOM', 'CVX'];
+    const midCap = ['CRM', 'ORCL', 'ADBE', 'CVS', 'MDT', 'TMO', 'ABT'];
+    
+    // Rotate preference every few days
+    const preference = Math.floor(dayOfYear / 3) % 3;
+    
+    if (preference === 0 && megaCap.includes(symbol)) {
+      return {score: 0.4, factor: 'mega-cap-day'};
+    } else if (preference === 1 && largeCap.includes(symbol)) {
+      return {score: 0.4, factor: 'large-cap-day'};
+    } else if (preference === 2 && midCap.includes(symbol)) {
+      return {score: 0.4, factor: 'mid-cap-day'};
+    }
+    return {score: 0.1, factor: 'cap-neutral'};
+  }
+  
+  /**
+   * Earnings season proximity bonus
+   */
+  private getEarningsBonus(symbol: string, date: Date): {score: number, factor?: string} {
+    const month = date.getMonth() + 1; // 1-12
+    const day = date.getDate();
+    
+    // Earnings seasons: Jan (Q4), Apr (Q1), Jul (Q2), Oct (Q3)
+    const earningsMonths = [1, 4, 7, 10];
+    const isEarningsSeason = earningsMonths.includes(month);
+    
+    if (isEarningsSeason) {
+      // Higher bonus for weeks 2-3 of earnings month
+      if (day >= 8 && day <= 21) {
+        return {score: 0.5, factor: 'earnings-peak'};
+      } else {
+        return {score: 0.2, factor: 'earnings-season'};
+      }
+    }
+    return {score: 0.0};
+  }
+  
+  /**
+   * Performance momentum/contrarian bonus
+   */
+  private getPerformanceBonus(symbol: string, dayOfYear: number): {score: number, factor: string} {
+    // Simulate recent performance trends
+    const trendingUp = ['NVDA', 'META', 'GOOGL', 'MSFT', 'AMZN'];
+    const trendingDown = ['AAPL', 'TSLA', 'BA', 'CAT', 'GE'];
+    const sideways = ['JPM', 'WMT', 'PG', 'KO', 'JNJ'];
+    
+    // Alternate between momentum and contrarian strategy
+    const isMomentumDay = (dayOfYear % 6) < 3;
+    
+    if (isMomentumDay) {
+      if (trendingUp.includes(symbol)) {
+        return {score: 0.4, factor: 'momentum-up'};
+      } else if (sideways.includes(symbol)) {
+        return {score: 0.2, factor: 'momentum-stable'};
+      }
+      return {score: 0.0, factor: 'momentum-weak'};
+    } else {
+      // Contrarian day - buy the dips
+      if (trendingDown.includes(symbol)) {
+        return {score: 0.4, factor: 'contrarian-dip'};
+      } else if (sideways.includes(symbol)) {
+        return {score: 0.2, factor: 'contrarian-stable'};
+      }
+      return {score: 0.0, factor: 'contrarian-expensive'};
+    }
+  }
+  
+  /**
+   * Day of week bonus - different sectors perform better on different days
+   */
+  private getDayOfWeekBonus(symbol: string, dayOfWeek: number): {score: number, factor?: string} {
+    // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    const techSymbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA', 'NVDA'];
+    const financeSymbols = ['JPM', 'BAC', 'WFC', 'GS', 'MS'];
+    const consumerSymbols = ['WMT', 'HD', 'PG', 'KO', 'MCD'];
+    
+    switch (dayOfWeek) {
+      case 1: // Monday - Tech momentum
+        if (techSymbols.includes(symbol)) return {score: 0.3, factor: 'monday-tech'};
+        break;
+      case 2: // Tuesday - Finance focus
+        if (financeSymbols.includes(symbol)) return {score: 0.3, factor: 'tuesday-finance'};
+        break;
+      case 3: // Wednesday - Mixed/Balanced
+        return {score: 0.1, factor: 'wednesday-balanced'};
+      case 4: // Thursday - Consumer/Retail
+        if (consumerSymbols.includes(symbol)) return {score: 0.3, factor: 'thursday-consumer'};
+        break;
+      case 5: // Friday - High volatility for weekend news
+        if (['TSLA', 'BA', 'CAT', 'NVDA'].includes(symbol)) return {score: 0.3, factor: 'friday-volatile'};
+        break;
+    }
+    return {score: 0.0};
+  }
+  
+  /**
+   * Variety penalty to avoid showing the same companies too frequently
+   */
+  private getVarietyPenalty(symbol: string): number {
+    const lastRotation = cacheService.get<string>('last_company_rotation');
+    if (!lastRotation) return 0;
+    
+    const daysSinceRotation = Math.floor((Date.now() - new Date(lastRotation).getTime()) / (1000 * 60 * 60 * 24));
+    
+    // Get recently shown companies from cache
+    const recentCompanies = cacheService.get<string[]>('recent_companies') || [];
+    
+    if (recentCompanies.includes(symbol)) {
+      // Penalize recently shown companies based on how recently they appeared
+      const recentIndex = recentCompanies.indexOf(symbol);
+      if (recentIndex < 5) return 0.6 - (recentIndex * 0.1); // Heavy penalty for very recent
+      if (recentIndex < 10) return 0.3 - ((recentIndex - 5) * 0.05); // Medium penalty
+      return 0.1; // Light penalty for older appearances
+    }
+    
+    return 0; // No penalty for companies not recently shown
   }
 
   /**
-   * Shuffle array with deterministic seed
+   * Update comprehensive data for a single company
    */
-  private shuffleArrayWithSeed<T>(array: T[], seed: number): T[] {
-    const result = [...array];
-    let m = result.length;
-    
-    // Simple linear congruential generator for pseudo-random numbers
-    let current = seed;
-    
-    while (m) {
-      current = (current * 1103515245 + 12345) & 0x7fffffff;
-      const i = Math.floor((current / 0x7fffffff) * m--);
-      [result[m], result[i]] = [result[i], result[m]];
-    }
-    
-    return result;
+  private async updateCompanyData(symbol: string): Promise<void> {
+    await enhancedFmpApi.getComprehensiveStockData(symbol);
   }
 
   /**
@@ -293,7 +450,7 @@ class DailySchedulerService {
    * Get current featured companies
    */
   getCurrentFeaturedCompanies(): string[] {
-    return cacheService.get<string[]>('featured_stocks_daily') || this.getDefaultCompanies();
+    return cacheService.get<string[]>('featured_companies_symbols') || this.getDefaultCompanies();
   }
 
   /**

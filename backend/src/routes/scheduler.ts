@@ -131,4 +131,24 @@ router.delete('/companies/:symbol', async (req: Request, res: Response) => {
   }
 });
 
+// Manual trigger for testing (add before export)
+router.post('/trigger-selection', async (req, res) => {
+  try {
+    logger.info('🔧 Manual company selection triggered');
+    const result = await dailyScheduler.triggerManualUpdate();
+    res.json({
+      success: true,
+      message: 'Company selection triggered successfully',
+      result
+    });
+  } catch (error: any) {
+    logger.error('❌ Manual selection failed:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to trigger company selection',
+      details: error.message
+    });
+  }
+});
+
 export { router as schedulerRoutes }; 
