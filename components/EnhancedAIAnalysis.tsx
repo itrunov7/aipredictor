@@ -430,22 +430,22 @@ export function EnhancedAIAnalysis({
   return (
     <div className="bg-white dark:bg-black rounded-[28px] shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(255,255,255,0.08)] border border-gray-200/20 dark:border-gray-800/50 overflow-hidden backdrop-blur-xl">
       {/* Apple-style minimal header */}
-      <div className="px-10 py-8 bg-gradient-to-b from-gray-50/50 to-transparent dark:from-gray-900/50 border-b border-gray-200/30 dark:border-gray-800/30">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-5">
-            <div className="w-14 h-14 bg-gradient-to-br from-blue-500 via-purple-500 to-blue-600 rounded-[20px] flex items-center justify-center shadow-lg shadow-blue-500/25">
-              <SparklesIcon className="w-8 h-8 text-white" />
+      <div className="px-6 md:px-10 py-6 md:py-8 bg-gradient-to-b from-gray-50/50 to-transparent dark:from-gray-900/50 border-b border-gray-200/30 dark:border-gray-800/30">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center space-x-4 md:space-x-5">
+            <div className="w-12 md:w-14 h-12 md:h-14 bg-gradient-to-br from-blue-500 via-purple-500 to-blue-600 rounded-[18px] md:rounded-[20px] flex items-center justify-center shadow-lg shadow-blue-500/25">
+              <SparklesIcon className="w-6 md:w-8 h-6 md:h-8 text-white" />
             </div>
             <div>
-              <h3 className="text-[28px] font-semibold text-gray-900 dark:text-white leading-tight tracking-tight">AI Analysis</h3>
-              <p className="text-[15px] text-gray-600 dark:text-gray-400 mt-1">Powered by GPT-4 • {analysis.sources.length} data sources</p>
+              <h3 className="text-[24px] md:text-[28px] font-semibold text-gray-900 dark:text-white leading-tight tracking-tight">AI Analysis</h3>
+              <p className="text-[14px] md:text-[15px] text-gray-600 dark:text-gray-400 mt-1">Powered by GPT-4 • {analysis.sources.length} data sources</p>
             </div>
           </div>
-          <div className="flex items-center space-x-4">
-            <div className={`px-5 py-2.5 rounded-full text-[13px] font-semibold ${getConfidenceColor(analysis.confidence)}`}>
+          <div className="flex items-center space-x-3 md:space-x-4">
+            <div className={`px-4 md:px-5 py-2 md:py-2.5 rounded-full text-[12px] md:text-[13px] font-semibold ${getConfidenceColor(analysis.confidence)}`}>
               {analysis.confidence}% confidence
             </div>
-            <div className="flex items-center space-x-2 text-[13px] text-gray-500 dark:text-gray-400">
+            <div className="flex items-center space-x-2 text-[12px] md:text-[13px] text-gray-500 dark:text-gray-400">
               <ClockIcon className="w-4 h-4" />
               <span>{getTimeAgo(lastUpdated)}</span>
             </div>
@@ -453,9 +453,9 @@ export function EnhancedAIAnalysis({
         </div>
       </div>
 
-      <div className="px-10 py-8 space-y-10">
+      <div className="px-6 md:px-10 py-6 md:py-8 space-y-8 md:space-y-10">
         {/* Apple-style prediction cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
           {[
             { label: '24H Target', period: 'nextDay', icon: ClockIcon },
             { label: '1W Target', period: 'nextWeek', icon: CalendarDaysIcon },
@@ -465,34 +465,34 @@ export function EnhancedAIAnalysis({
             const TrendIcon = getTrendIcon(prediction.changePercent);
             
             return (
-              <div key={period} className="bg-gray-50/80 dark:bg-gray-900/40 rounded-[20px] p-5 transition-all duration-300 hover:shadow-lg hover:shadow-gray-200/50 dark:hover:shadow-gray-800/50 hover:bg-gray-100/80 dark:hover:bg-gray-800/60 border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-9 h-9 bg-white dark:bg-gray-800 rounded-[12px] flex items-center justify-center shadow-sm">
-                      <Icon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+              <div key={period} className="bg-gray-50/80 dark:bg-gray-900/40 rounded-[20px] p-4 transition-all duration-300 hover:shadow-lg hover:shadow-gray-200/50 dark:hover:shadow-gray-800/50 hover:bg-gray-100/80 dark:hover:bg-gray-800/60 border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 bg-white dark:bg-gray-800 rounded-[10px] flex items-center justify-center shadow-sm">
+                      <Icon className="w-3.5 h-3.5 text-gray-600 dark:text-gray-400" />
                     </div>
-                    <span className="text-[14px] font-semibold text-gray-700 dark:text-gray-300">{label}</span>
+                    <span className="text-[13px] font-semibold text-gray-700 dark:text-gray-300">{label}</span>
                   </div>
-                  <TrendIcon className={`w-5 h-5 ${getTrendColor(prediction.changePercent)}`} />
+                  <TrendIcon className={`w-4 h-4 ${getTrendColor(prediction.changePercent)}`} />
                 </div>
                 
-                <div className="space-y-4">
-                  <div className="text-[26px] font-semibold text-gray-900 dark:text-white leading-none tracking-tight">
+                <div className="space-y-3">
+                  <div className="text-[22px] font-semibold text-gray-900 dark:text-white leading-none tracking-tight">
                     {formatCurrency(prediction.price)}
                   </div>
-                  <div className={`text-[16px] font-semibold ${getTrendColor(prediction.changePercent)}`}>
+                  <div className={`text-[14px] font-semibold ${getTrendColor(prediction.changePercent)}`}>
                     {formatPercent(prediction.changePercent)}
                   </div>
-                  <div className="w-full bg-gray-200/70 dark:bg-gray-700/70 rounded-full h-2.5">
+                  <div className="w-full bg-gray-200/70 dark:bg-gray-700/70 rounded-full h-2">
                     <div 
-                      className={`h-2.5 rounded-full transition-all duration-700 ease-out ${
+                      className={`h-2 rounded-full transition-all duration-700 ease-out ${
                         prediction.confidence >= 80 ? 'bg-green-500 shadow-green-500/30' : 
                         prediction.confidence >= 60 ? 'bg-yellow-500 shadow-yellow-500/30' : 'bg-red-500 shadow-red-500/30'
                       } shadow-lg`}
                       style={{ width: `${prediction.confidence}%` }}
                     />
                   </div>
-                  <div className="text-[13px] font-medium text-gray-600 dark:text-gray-400">
+                  <div className="text-[12px] font-medium text-gray-600 dark:text-gray-400">
                     {prediction.confidence}% confidence
                   </div>
                 </div>
