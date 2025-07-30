@@ -455,9 +455,9 @@ export function EnhancedAIAnalysis({
         </div>
       </div>
 
-      <div className="px-4 md:px-8 py-4 md:py-6 space-y-6 md:space-y-8">
+      <div className="px-3 md:px-6 py-3 md:py-5 space-y-4 md:space-y-6">
         {/* Apple-style prediction cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 lg:gap-3">
           {[
             { label: '24H Target', period: 'nextDay', icon: ClockIcon },
             { label: '1W Target', period: 'nextWeek', icon: CalendarDaysIcon },
@@ -467,35 +467,39 @@ export function EnhancedAIAnalysis({
             const TrendIcon = getTrendIcon(prediction.changePercent);
             
             return (
-              <div key={period} className="bg-gray-50/80 dark:bg-gray-900/40 rounded-[16px] p-3 transition-all duration-300 hover:shadow-lg hover:shadow-gray-200/50 dark:hover:shadow-gray-800/50 hover:bg-gray-100/80 dark:hover:bg-gray-800/60 border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-sm">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center space-x-1.5">
-                    <div className="w-7 h-7 bg-white dark:bg-gray-800 rounded-[8px] flex items-center justify-center shadow-sm">
+              <div key={period} className="bg-gray-50/80 dark:bg-gray-900/40 rounded-[12px] p-2.5 transition-all duration-300 hover:shadow-lg hover:shadow-gray-200/50 dark:hover:shadow-gray-800/50 hover:bg-gray-100/80 dark:hover:bg-gray-800/60">
+                <div className="space-y-1.5">
+                  {/* Header with icon and label */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-1">
                       <Icon className="w-3 h-3 text-gray-600 dark:text-gray-400" />
+                      <span className="text-[9px] font-medium text-gray-600 dark:text-gray-400 tracking-tight">{label}</span>
                     </div>
-                    <span className="text-[11px] font-semibold text-gray-700 dark:text-gray-300">{label}</span>
+                    <TrendIcon className="w-3 h-3 text-gray-500 dark:text-gray-500" />
                   </div>
-                  <TrendIcon className={`w-3.5 h-3.5 ${getTrendColor(prediction.changePercent)}`} />
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="text-[18px] font-semibold text-gray-900 dark:text-white leading-none tracking-tight">
-                    {formatCurrency(prediction.price)}
+                  
+                  {/* Price and percentage in single line */}
+                  <div className="flex items-baseline justify-between">
+                    <div className="text-[14px] font-semibold text-gray-900 dark:text-white leading-none tracking-tight">
+                      {formatCurrency(prediction.price)}
+                    </div>
+                    <div className={`text-[10px] font-semibold ${getTrendColor(prediction.changePercent)}`}>
+                      {formatPercent(prediction.changePercent)}
+                    </div>
                   </div>
-                  <div className={`text-[12px] font-semibold ${getTrendColor(prediction.changePercent)}`}>
-                    {formatPercent(prediction.changePercent)}
-                  </div>
-                  <div className="w-full bg-gray-200/70 dark:bg-gray-700/70 rounded-full h-1.5">
-                    <div 
-                      className={`h-1.5 rounded-full transition-all duration-700 ease-out ${
-                        prediction.confidence >= 80 ? 'bg-green-500 shadow-green-500/30' : 
-                        prediction.confidence >= 60 ? 'bg-yellow-500 shadow-yellow-500/30' : 'bg-red-500 shadow-red-500/30'
-                      } shadow-lg`}
-                      style={{ width: `${prediction.confidence}%` }}
-                    />
-                  </div>
-                  <div className="text-[10px] font-medium text-gray-600 dark:text-gray-400">
-                    {prediction.confidence}% confidence
+                  
+                  {/* Confidence bar */}
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[8px] text-gray-500 dark:text-gray-500">Confidence</span>
+                      <span className="text-[8px] font-medium text-gray-700 dark:text-gray-300">{prediction.confidence}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1">
+                      <div 
+                        className="bg-gradient-to-r from-blue-500 to-purple-500 h-1 rounded-full transition-all duration-300" 
+                        style={{ width: `${prediction.confidence}%` }}
+                      ></div>
+                    </div>
                   </div>
                 </div>
               </div>
