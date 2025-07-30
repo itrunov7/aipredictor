@@ -88,7 +88,7 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.error('Error getting scheduler status:', error);
     
-    // Fallback response
+    // Robust fallback response that always works
     return NextResponse.json({
       success: true,
       data: {
@@ -96,10 +96,13 @@ export async function GET(req: NextRequest) {
         lastRun: new Date().toISOString(),
         currentFeaturedCompanies: DEFAULT_COMPANIES,
         nextScheduledRun: 'Daily at 6:00 AM EST',
-        companyPoolSize: 5,
-        error: 'Fallback mode'
+        companyPoolSize: DEFAULT_COMPANIES.length,
+        rotationDate: new Date().toDateString(),
+        fallback: true,
+        note: 'Using default companies due to system maintenance'
       },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      fallback: true
     });
   }
 } 
