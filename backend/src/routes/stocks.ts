@@ -172,6 +172,56 @@ router.get('/featured', async (req: Request, res: Response) => {
   try {
     const featuredSymbols = dailyScheduler.getCurrentFeaturedCompanies();
     
+    // Validate that featuredSymbols is an array
+    if (!Array.isArray(featuredSymbols) || featuredSymbols.length === 0) {
+      logger.warn('⚠️ Invalid featured symbols from scheduler, using fallback companies');
+      const fallbackSymbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA'];
+      logger.info(`🔄 Fetching fresh featured stocks from API: ${fallbackSymbols.join(', ')} (will cache for 24h)`);
+      
+      // Use fallback logic with the default symbols
+      const quotePromises = fallbackSymbols.map(async (symbol: string) => {
+        try {
+          return await enhancedFmpApi.getStockQuote(symbol);
+        } catch (error: any) {
+          logger.error(`Failed to fetch quote for ${symbol}:`, error.message);
+          return null;
+        }
+      });
+      
+      const results = await Promise.allSettled(quotePromises);
+      const validQuotes = results
+        .filter((result): result is PromiseFulfilledResult<any> => 
+          result.status === 'fulfilled' && result.value !== null
+        )
+        .map(result => result.value);
+
+      if (validQuotes.length === 0) {
+        return res.status(503).json({
+          success: false,
+          error: 'No stock data available',
+          message: 'All API requests failed'
+        });
+      }
+
+      const dataToCache = {
+        quotes: validQuotes,
+        lastUpdated: new Date().toISOString(),
+        source: 'fallback'
+      };
+
+      // Cache for 24 hours
+      cacheService.set(cacheKey, dataToCache, 24 * 60 * 60 * 1000);
+      logger.info('💾 Cached featured stocks for 24 hours');
+
+      return res.json({
+        success: true,
+        data: validQuotes,
+        count: validQuotes.length,
+        cached: false,
+        lastUpdated: dataToCache.lastUpdated
+      });
+    }
+    
     logger.info(`🔄 Fetching fresh featured stocks from API: ${featuredSymbols.join(', ')} (will cache for 24h)`);
 
     // Fetch quotes for all featured stocks in parallel
@@ -186,8 +236,10 @@ router.get('/featured', async (req: Request, res: Response) => {
 
     const quoteResults = await Promise.allSettled(quotePromises);
     const validQuotes = quoteResults
-      .filter((result: any) => result.status === 'fulfilled' && result.value !== null)
-      .map((result: any) => result.value);
+      .filter((result): result is PromiseFulfilledResult<any> => 
+        result.status === 'fulfilled' && result.value !== null
+      )
+      .map(result => result.value);
 
     // Cache the result for 24 hours
     const cacheData = {
