@@ -97,7 +97,9 @@ export function ClientOnlyStockCards() {
         {FEATURED_SYMBOLS.map((symbol, index) => (
           <div
             key={symbol}
-            className="animate-fade-in-up"
+            className={`animate-fade-in-up ${
+              FEATURED_SYMBOLS.length === 5 && index === 4 ? 'lg:col-span-2 lg:max-w-lg lg:mx-auto' : ''
+            }`}
             style={{ animationDelay: `${index * 150}ms` }}
           >
             <div className="bg-white dark:bg-gray-900 rounded-3xl p-8 shadow-sm border border-gray-100 dark:border-gray-800 h-96">
@@ -155,7 +157,9 @@ export function ClientOnlyStockCards() {
       {stocks.map((stock, index) => (
         <div
           key={stock.symbol}
-          className="animate-fade-in-up"
+          className={`animate-fade-in-up ${
+            stocks.length === 5 && index === 4 ? 'lg:col-span-2 lg:max-w-lg lg:mx-auto' : ''
+          }`}
           style={{ animationDelay: `${index * 150}ms` }}
         >
           <EnhancedStockCard data={stock} />
