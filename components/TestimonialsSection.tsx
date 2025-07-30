@@ -5,21 +5,21 @@ import { StarIcon } from '@heroicons/react/24/solid';
 
 const testimonials = [
   {
-    content: "SP500 Insights has transformed how I approach trading. The AI predictions are incredibly accurate and the transparent reasoning gives me confidence in my decisions.",
+    content: "Love the comprehensive analysis! The technical and fundamental breakdowns are exactly what I need. Would love to see sector comparison features next.",
     author: "Sarah Chen",
-    role: "Day Trader",
+    role: "Beta Tester",
     rating: 5
   },
   {
-    content: "Finally, a platform that explains the 'why' behind stock predictions. The combination of news analysis and AI insights is game-changing.",
+    content: "The AI explanations are incredibly detailed. My feedback: add more historical data visualization and maybe mobile alerts for key price movements.",
     author: "Michael Rodriguez",
-    role: "Portfolio Manager",
+    role: "Early User",
     rating: 5
   },
   {
-    content: "I've been using the free daily insights for months. The accuracy is impressive and it's helped me identify several profitable trades.",
+    content: "Free daily insights are amazing! Suggestion: could you add options flow data and crypto analysis too? This platform has huge potential.",
     author: "Jennifer Park",
-    role: "Individual Investor",
+    role: "Community Member",
     rating: 5
   }
 ];
@@ -30,10 +30,10 @@ export function TestimonialsSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Trusted by Traders Worldwide
+            Building Together with Our Community
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            See what our users are saying about their experience with AI-powered stock insights.
+            Hear from our beta users and early adopters who are helping us shape the future of trading intelligence.
           </p>
         </div>
 

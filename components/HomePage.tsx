@@ -7,7 +7,7 @@ import { HeroSection } from './HeroSection';
 import { FreeInsightsSection } from './FreeInsightsSection';
 import { FeaturesSection } from './FeaturesSection';
 import { TestimonialsSection } from './TestimonialsSection';
-import { PricingSection } from './PricingSection';
+
 import { EnhancedFooter } from './EnhancedFooter';
 
 export function HomePage() {
@@ -26,9 +26,6 @@ export function HomePage() {
       
       {/* Social Proof / Testimonials */}
       <TestimonialsSection />
-      
-      {/* Pricing Section */}
-      <PricingSection />
       
       {/* Footer */}
       <EnhancedFooter />

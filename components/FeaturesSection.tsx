@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { SparklesIcon, ChartBarIcon, ClockIcon, ShieldCheckIcon, LightBulbIcon, ArrowTrendingUpIcon } from '@heroicons/react/24/outline';
-import { SignupModal } from './SignupModal';
+import { FeedbackForm } from './FeedbackForm';
 
 const features = [
   {
@@ -44,8 +44,7 @@ const features = [
 ];
 
 export function FeaturesSection() {
-  const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
-  const [signupVariant, setSignupVariant] = useState<'free' | 'trial' | 'premium'>('free');
+  const [isFeedbackFormOpen, setIsFeedbackFormOpen] = useState(false);
 
   return (
     <section id="features" className="py-20 bg-gradient-to-br from-gray-50 to-white">
@@ -97,44 +96,40 @@ export function FeaturesSection() {
           ))}
         </div>
 
-        {/* Bottom CTA */}
+        {/* Bottom Feedback CTA */}
         <div className="text-center mt-16">
-          <div className="bg-gradient-to-r from-primary-50 to-blue-50 rounded-2xl p-8 border border-primary-100">
+          <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-2xl p-8 border border-green-100">
             <h3 className="text-2xl font-bold text-gray-900 mb-4">
-              Ready to Experience AI-Powered Trading?
+              Help Us Build the Ultimate Trading Platform
             </h3>
             <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-              Join thousands of traders who rely on our AI insights to make smarter investment decisions. 
-              Start with the 5 most interesting stocks daily, or upgrade for the top 50.
+              Your feedback shapes our product roadmap. Tell us what features you need most, what's working well, and what could be improved.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button 
                 onClick={() => {
-                  setSignupVariant('trial');
-                  setIsSignupModalOpen(true);
+                  setIsFeedbackFormOpen(true);
                 }}
                 className="btn-primary"
               >
-                Start Free Trial
+                💡 Suggest Features
               </button>
               <button 
                 onClick={() => {
-                  // Scroll to insights section
-                  document.getElementById('insights')?.scrollIntoView({ behavior: 'smooth' });
+                  setIsFeedbackFormOpen(true);
                 }}
                 className="btn-secondary"
               >
-                See Today's Picks
+                💬 Send Feedback
               </button>
             </div>
           </div>
         </div>
 
-        {/* Signup Modal */}
-        <SignupModal
-          isOpen={isSignupModalOpen}
-          onClose={() => setIsSignupModalOpen(false)}
-          variant={signupVariant}
+        {/* Feedback Form */}
+        <FeedbackForm
+          isOpen={isFeedbackFormOpen}
+          onClose={() => setIsFeedbackFormOpen(false)}
         />
       </div>
     </section>

@@ -98,8 +98,7 @@ class DailySchedulerService {
       for (const symbol of todaysCompanies) {
         try {
           logger.info(`🔄 Pre-fetching data for ${symbol}...`);
-          // TODO: Fix TypeScript compilation issue - temporarily disabled
-          // await this.updateCompanyData(symbol);
+          await this.updateCompanyData(symbol);
           updatedCompanies.push(symbol);
           logger.info(`✅ Updated data for ${symbol}`);
         } catch (error: any) {

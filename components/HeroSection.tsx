@@ -3,17 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { ChartBarIcon, SparklesIcon, ArrowTrendingUpIcon as TrendingUpIcon } from '@heroicons/react/24/outline';
 import { ArrowTrendingUpIcon, ArrowTrendingDownIcon } from '@heroicons/react/24/solid';
-import { SignupModal } from './SignupModal';
+import { FeedbackForm } from './FeedbackForm';
 import { useApp } from '@/contexts/AppContext';
-
-// Mock market data - updated with current relevant prices
-const mockMarketData = [
-  { symbol: 'AAPL', price: 214.59, change: 0.71, prediction: '+2.8%' },
-  { symbol: 'MSFT', price: 513.94, change: 0.20, prediction: '+2.1%' },
-  { symbol: 'GOOGL', price: 191.94, change: -1.23, prediction: '+1.6%' },
-  { symbol: 'AMZN', price: 233.46, change: 2.01, prediction: '+3.1%' },
-  { symbol: 'TSLA', price: 324.75, change: 8.73, prediction: '+4.5%' }
-];
 
 const features = [
   {
@@ -35,15 +26,21 @@ const features = [
 
 export function HeroSection() {
   const [currentDataIndex, setCurrentDataIndex] = useState(0);
-  const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
-  const [signupVariant, setSignupVariant] = useState<'free' | 'trial' | 'premium'>('free');
+  const [isFeedbackFormOpen, setIsFeedbackFormOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [marketData] = useState([
+    { symbol: 'AAPL', price: 214.59, change: 0.71, prediction: '+2.8%' },
+    { symbol: 'MSFT', price: 513.94, change: 0.20, prediction: '+2.1%' },
+    { symbol: 'GOOGL', price: 191.94, change: -1.23, prediction: '+1.6%' },
+    { symbol: 'AMZN', price: 233.46, change: 2.01, prediction: '+3.1%' },
+    { symbol: 'TSLA', price: 324.75, change: 8.73, prediction: '+4.5%' }
+  ]);
   const { updateLastRefreshed } = useApp();
 
   // Rotate through market data
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentDataIndex((prev) => (prev + 1) % mockMarketData.length);
+      setCurrentDataIndex((prev) => (prev + 1) % marketData.length);
     }, 3000);
 
     return () => clearInterval(interval);
@@ -55,7 +52,7 @@ export function HeroSection() {
     return () => clearTimeout(timer);
   }, []);
 
-  const currentStock = mockMarketData[currentDataIndex];
+  const currentStock = marketData[currentDataIndex];
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -99,7 +96,7 @@ export function HeroSection() {
           {/* Badge */}
           <div className="inline-flex items-center px-4 py-2 rounded-full bg-primary-50 text-primary-700 text-sm font-medium mb-8 animate-fade-in-up">
             <SparklesIcon className="w-4 h-4 mr-2" />
-            AI-Powered Stock Analysis for SP500 Traders
+            Free AI-Powered Analysis • Help Us Build the Best Product
           </div>
 
           {/* Main Headline */}
@@ -117,8 +114,7 @@ export function HeroSection() {
           <p className={`text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed transition-opacity duration-700 delay-300 ${
             isVisible ? 'opacity-100' : 'opacity-0'
           }`}>
-            Real-time insights from 10 FMP data sources with transparent AI analysis. 
-            Understand the story behind every price movement.
+            Free daily insights from 10+ data sources with AI analysis. Help us build the ultimate trading intelligence platform with your feedback.
           </p>
 
           {/* Live Market Data Showcase */}
@@ -147,7 +143,7 @@ export function HeroSection() {
             </div>
             <div className="mt-3 flex justify-center">
               <div className="flex space-x-1">
-                {mockMarketData.map((_, index) => (
+                {marketData.map((_, index: number) => (
                   <div
                     key={index}
                     className={`w-2 h-2 rounded-full transition-colors ${
@@ -174,18 +170,17 @@ export function HeroSection() {
             </button>
             <button 
               onClick={() => {
-                setSignupVariant('trial');
-                setIsSignupModalOpen(true);
+                setIsFeedbackFormOpen(true);
               }}
               className="btn-secondary text-lg px-8 py-3"
             >
-              Start Free Trial
+              💬 Give us feedback →
             </button>
           </div>
 
           {/* Trust Indicators */}
           <div className="text-center animate-fade-in-up">
-            <p className="text-sm text-gray-500 mb-4">Trusted by thousands of traders • Most interesting companies daily</p>
+            <p className="text-sm text-gray-500 mb-4">100% Free Daily Insights • Help us build the best product for traders</p>
             <div className="flex items-center justify-center space-x-8 text-gray-400">
               <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
@@ -226,11 +221,10 @@ export function HeroSection() {
       {/* Bottom Gradient */}
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white to-transparent"></div>
 
-      {/* Signup Modal */}
-      <SignupModal
-        isOpen={isSignupModalOpen}
-        onClose={() => setIsSignupModalOpen(false)}
-        variant={signupVariant}
+      {/* Feedback Form */}
+      <FeedbackForm
+        isOpen={isFeedbackFormOpen}
+        onClose={() => setIsFeedbackFormOpen(false)}
       />
     </section>
   );

@@ -2,19 +2,18 @@
 
 import React, { useState } from 'react';
 import { Bars3Icon, XMarkIcon, ChartBarIcon, BoltIcon, ClockIcon, MoonIcon, SunIcon } from '@heroicons/react/24/outline';
-import { SignupModal } from './SignupModal';
+import { FeedbackForm } from './FeedbackForm';
 import { useApp } from '@/contexts/AppContext';
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
-  const [signupVariant, setSignupVariant] = useState<'free' | 'trial' | 'premium'>('free');
+  const [isFeedbackFormOpen, setIsFeedbackFormOpen] = useState(false);
   const { lastRefreshed, isDarkMode, toggleDarkMode } = useApp();
 
   const navigation = [
     { name: 'Insights', href: '#insights' },
     { name: 'Features', href: '#features' },
-    { name: 'Pricing', href: '#pricing' },
+    { name: 'Feedback', href: '#feedback' },
     { name: 'About', href: '#about' }
   ];
 
@@ -71,21 +70,19 @@ export function Header() {
             
             <button 
               onClick={() => {
-                setSignupVariant('free');
-                setIsSignupModalOpen(true);
+                document.getElementById('feedback')?.scrollIntoView({ behavior: 'smooth' });
               }}
               className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white text-sm font-medium transition-colors"
             >
-              Sign In
+              💬 Feedback
             </button>
             <button 
               onClick={() => {
-                setSignupVariant('free');
-                setIsSignupModalOpen(true);
+                setIsFeedbackFormOpen(true);
               }}
               className="btn-primary"
             >
-              Get Started
+              📝 Share Feedback
             </button>
           </div>
 
@@ -125,23 +122,21 @@ export function Header() {
               <div className="flex flex-col space-y-2 px-3">
                 <button 
                   onClick={() => {
-                    setSignupVariant('free');
-                    setIsSignupModalOpen(true);
+                    document.getElementById('feedback')?.scrollIntoView({ behavior: 'smooth' });
                     setIsMenuOpen(false);
                   }}
                   className="text-left text-gray-600 hover:text-gray-900 text-base font-medium transition-colors"
                 >
-                  Sign In
+                  💬 Feedback
                 </button>
                 <button 
                   onClick={() => {
-                    setSignupVariant('free');
-                    setIsSignupModalOpen(true);
+                    setIsFeedbackFormOpen(true);
                     setIsMenuOpen(false);
                   }}
                   className="btn-primary text-left"
                 >
-                  Get Started
+                  📝 Share Feedback
                 </button>
               </div>
             </div>
@@ -177,11 +172,10 @@ export function Header() {
         </div>
       </div>
 
-      {/* Signup Modal */}
-      <SignupModal
-        isOpen={isSignupModalOpen}
-        onClose={() => setIsSignupModalOpen(false)}
-        variant={signupVariant}
+      {/* Feedback Form */}
+      <FeedbackForm
+        isOpen={isFeedbackFormOpen}
+        onClose={() => setIsFeedbackFormOpen(false)}
       />
     </header>
   );
