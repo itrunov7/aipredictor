@@ -16,6 +16,16 @@ export function FreeInsightsSection() {
   const [featuredCompanies, setFeaturedCompanies] = useState<string[]>([]);
   const [lastRotation, setLastRotation] = useState<string>('');
   const [nextRotation, setNextRotation] = useState<string>('');
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Update current time every minute for real-time calculations
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // Update every minute
+
+    return () => clearInterval(timer);
+  }, []);
 
   // Fetch today's featured companies and rotation info
   useEffect(() => {
@@ -53,25 +63,27 @@ export function FreeInsightsSection() {
   const formatTimeUntilNext = () => {
     if (!nextRotation) return '24 hours';
     
-    const now = new Date();
     const next = new Date(nextRotation);
-    const diffMs = next.getTime() - now.getTime();
+    const diffMs = next.getTime() - currentTime.getTime();
     const diffHours = Math.ceil(diffMs / (1000 * 60 * 60));
+    const diffMinutes = Math.ceil(diffMs / (1000 * 60));
     
-    if (diffHours <= 1) return 'Soon';
+    if (diffMs <= 0) return 'Soon';
+    if (diffHours < 1) return `${diffMinutes}min`;
     if (diffHours >= 24) return '24 hours';
-    return `${diffHours} hours`;
+    return `${diffHours}h`;
   };
 
   const formatLastUpdated = () => {
     if (!lastRotation) return 'Today';
     
     const updated = new Date(lastRotation);
-    const now = new Date();
-    const diffMs = now.getTime() - updated.getTime();
+    const diffMs = currentTime.getTime() - updated.getTime();
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
     
-    if (diffHours < 1) return 'Just now';
+    if (diffMinutes < 5) return 'Just now';
+    if (diffMinutes < 60) return `${diffMinutes}min ago`;
     if (diffHours < 24) return `${diffHours}h ago`;
     return 'Today';
   };
@@ -79,8 +91,15 @@ export function FreeInsightsSection() {
   return (
     <section className="py-16 bg-white dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
+        {/* Section Header with Smart Algorithm Feature */}
         <div className="text-center mb-8">
+          <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 px-6 py-3 rounded-full mb-6 border border-blue-200 dark:border-blue-700">
+            <ArrowPathIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <span className="text-sm font-semibold text-blue-800 dark:text-blue-200">
+              Smart Algorithm Selects 5 Companies Every 24 Hours
+            </span>
+          </div>
+          
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4">
             Today's Featured Companies
           </h2>
@@ -105,7 +124,7 @@ export function FreeInsightsSection() {
                     Daily Company Rotation
                   </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Smart algorithm selects 5 companies every 24 hours
+                    Sector-balanced selection from 30-company pool
                   </p>
                 </div>
               </div>
