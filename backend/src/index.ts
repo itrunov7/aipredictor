@@ -6,11 +6,14 @@ import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { logger } from './utils/logger';
 
+// Import services
+import { dailyScheduler } from './services/dailyScheduler';
 
 // Import routes
 import { stockRoutes } from './routes/stocks';
 import enhancedInsightsRoutes from './routes/enhanced-insights';
 import { cacheRoutes } from './routes/cache';
+import { schedulerRoutes } from './routes/scheduler';
 
 // Load environment variables
 dotenv.config({ path: '.env' });
@@ -73,10 +76,11 @@ app.get('/health', (req, res) => {
   });
 });
 
-// API Routes
+// Register routes
 app.use('/api/stocks', stockRoutes);
 app.use('/api/insights', enhancedInsightsRoutes);
 app.use('/api/cache', cacheRoutes);
+app.use('/api/scheduler', schedulerRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

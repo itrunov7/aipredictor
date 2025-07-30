@@ -1,9 +1,10 @@
-import express, { Request, Response } from 'express';
+import { Router, Request, Response } from 'express';
 import { enhancedFmpApi } from '../services/enhancedFmpApi';
-import { logger } from '../utils/logger';
 import { cacheService } from '../services/cacheService';
+import { dailyScheduler } from '../services/dailyScheduler';
+import { logger } from '../utils/logger';
 
-const router = express.Router();
+const router = Router();
 
 /**
  * GET /api/stocks/quote/:symbol
@@ -169,26 +170,28 @@ router.get('/featured', async (req: Request, res: Response) => {
   }
 
   try {
-    const featuredSymbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA'];
+    const featuredSymbols = dailyScheduler.getCurrentFeaturedCompanies();
     
     logger.info(`🔄 Fetching fresh featured stocks from API: ${featuredSymbols.join(', ')} (will cache for 24h)`);
 
-    // Fetch quotes in parallel
-    const promises = featuredSymbols.map(symbol => 
-      enhancedFmpApi.getStockQuote(symbol).catch(error => ({
-        symbol,
-        error: error.message
-      }))
-    );
+    // Fetch quotes for all featured stocks in parallel
+    const quotePromises = featuredSymbols.map(async (symbol: string) => {
+      try {
+        return await enhancedFmpApi.getStockQuote(symbol);
+      } catch (error) {
+        logger.error(`Failed to fetch quote for ${symbol}:`, error);
+        return null;
+      }
+    });
 
-    const results = await Promise.allSettled(promises);
-    const quotes = results
-      .filter(result => result.status === 'fulfilled' && !(result.value as any).error)
-      .map(result => (result as PromiseFulfilledResult<any>).value);
+    const quoteResults = await Promise.allSettled(quotePromises);
+    const validQuotes = quoteResults
+      .filter((result: any) => result.status === 'fulfilled' && result.value !== null)
+      .map((result: any) => result.value);
 
     // Cache the result for 24 hours
     const cacheData = {
-      quotes,
+      quotes: validQuotes,
       lastUpdated: new Date().toISOString()
     };
     cacheService.set(cacheKey, cacheData);
@@ -196,8 +199,8 @@ router.get('/featured', async (req: Request, res: Response) => {
 
     res.json({
       success: true,
-      data: quotes,
-      count: quotes.length,
+      data: validQuotes,
+      count: validQuotes.length,
       cached: false,
       lastUpdated: cacheData.lastUpdated
     });

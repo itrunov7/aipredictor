@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { Providers } from '@/components/providers';
+import { AppProvider } from '@/contexts/AppContext';
 import { Toaster } from 'react-hot-toast';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -76,11 +77,12 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="SP500 Insights" />
       </head>
-      <body className={`${inter.className} h-full bg-gray-50 antialiased`}>
-        <Providers>
-          <div className="min-h-full">
-            {children}
-          </div>
+      <body className={`${inter.className} h-full bg-gray-50 antialiased dark:bg-gray-900`}>
+        <AppProvider>
+          <Providers>
+            <div className="min-h-full">
+              {children}
+            </div>
           <Toaster
             position="top-right"
             toastOptions={{
@@ -107,7 +109,8 @@ export default function RootLayout({
               },
             }}
           />
-        </Providers>
+          </Providers>
+        </AppProvider>
       </body>
     </html>
   );

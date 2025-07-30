@@ -1,13 +1,15 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Bars3Icon, XMarkIcon, ChartBarIcon, BoltIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon, XMarkIcon, ChartBarIcon, BoltIcon, ClockIcon, MoonIcon, SunIcon } from '@heroicons/react/24/outline';
 import { SignupModal } from './SignupModal';
+import { useApp } from '@/contexts/AppContext';
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
   const [signupVariant, setSignupVariant] = useState<'free' | 'trial' | 'premium'>('free');
+  const { lastRefreshed, isDarkMode, toggleDarkMode } = useApp();
 
   const navigation = [
     { name: 'Insights', href: '#insights' },
@@ -48,12 +50,31 @@ export function Header() {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center space-x-4">
+            {/* Timestamp */}
+            <div className="flex items-center space-x-2 text-xs text-gray-500 bg-gray-50 dark:bg-gray-800 dark:text-gray-400 px-3 py-2 rounded-lg">
+              <ClockIcon className="w-4 h-4" />
+              <span>Last refreshed {new Date(lastRefreshed).toLocaleTimeString()}</span>
+            </div>
+            
+            {/* Dark mode toggle */}
+            <button
+              onClick={toggleDarkMode}
+              className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-lg transition-colors"
+              title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {isDarkMode ? (
+                <SunIcon className="w-5 h-5" />
+              ) : (
+                <MoonIcon className="w-5 h-5" />
+              )}
+            </button>
+            
             <button 
               onClick={() => {
                 setSignupVariant('free');
                 setIsSignupModalOpen(true);
               }}
-              className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"
+              className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white text-sm font-medium transition-colors"
             >
               Sign In
             </button>

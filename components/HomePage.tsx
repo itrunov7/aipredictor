@@ -8,7 +8,7 @@ import { FreeInsightsSection } from './FreeInsightsSection';
 import { FeaturesSection } from './FeaturesSection';
 import { TestimonialsSection } from './TestimonialsSection';
 import { PricingSection } from './PricingSection';
-import { Footer } from './Footer';
+import { EnhancedFooter } from './EnhancedFooter';
 
 export function HomePage() {
   return (
@@ -31,7 +31,7 @@ export function HomePage() {
       <PricingSection />
       
       {/* Footer */}
-      <Footer />
+      <EnhancedFooter />
     </div>
   );
 } 

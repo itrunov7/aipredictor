@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { ArrowTrendingUpIcon, ArrowTrendingDownIcon, ExclamationTriangleIcon, LinkIcon, ChartBarIcon, NewspaperIcon, UserGroupIcon, CurrencyDollarIcon, GlobeAltIcon, HeartIcon } from '@heroicons/react/24/outline';
+import React, { useState } from 'react';
+import { ArrowTrendingUpIcon, ArrowTrendingDownIcon, ExclamationTriangleIcon, LinkIcon, ChartBarIcon, NewspaperIcon, UserGroupIcon, CurrencyDollarIcon, GlobeAltIcon, HeartIcon, ChevronDownIcon, ChevronUpIcon, ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 
 interface PredictionData {
   symbol: string;
@@ -56,6 +56,26 @@ export function StockCard({
   variant = 'featured', 
   showActions = false 
 }: StockCardProps) {
+  // Safety check for undefined data
+  if (!data) {
+    return (
+      <div className="glass-card p-6 h-96">
+        <div className="animate-pulse">
+          <div className="h-6 bg-gray-200 rounded mb-4"></div>
+          <div className="h-8 bg-gray-200 rounded mb-4"></div>
+          <div className="space-y-3">
+            <div className="h-4 bg-gray-200 rounded"></div>
+            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  // State for expanding/collapsing sources
+  const [showAllSources, setShowAllSources] = useState(false);
+  
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -289,80 +309,127 @@ export function StockCard({
         </p>
       </div>
 
-      {/* Evidence Sources */}
+      {/* Market Intelligence - Clean & Elegant */}
       {data.analysis.sources && data.analysis.sources.length > 0 && (
         <div className="space-y-3 mb-4">
-          <h5 className="text-sm font-semibold text-gray-700">Analysis Sources ({data.analysis.sources.length})</h5>
-          <div className="space-y-2 max-h-40 overflow-y-auto">
-            {data.analysis.sources.map((source, index) => (
+          <div className="flex items-center justify-between">
+            <h5 className="text-sm font-semibold text-gray-900">Market Intelligence</h5>
+            <div className="flex items-center space-x-2 text-xs text-gray-600">
+              <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+              <span>{data.analysis.sources.length} sources</span>
+            </div>
+          </div>
+          
+          {/* Compact Sources List */}
+          <div className="space-y-2">
+            {data.analysis.sources.slice(0, showAllSources ? data.analysis.sources.length : 4).map((source, index) => (
               <a
                 key={index}
                 href={source.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`block p-3 rounded-lg border transition-all duration-200 hover:shadow-md ${getSourceColor(source.impact)}`}
+                className="group flex items-center justify-between p-2.5 bg-gray-50 hover:bg-blue-50 border border-transparent hover:border-blue-200 rounded-lg transition-all duration-200 cursor-pointer block"
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-2 flex-1">
-                    <div className="flex-shrink-0 mt-0.5">
-                      {getSourceIcon(source.type)}
+                <div className="flex items-center space-x-2.5 flex-1 min-w-0">
+                  {/* Source Type Indicator */}
+                  <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                    source.type === 'analyst' ? 'bg-blue-500' :
+                    source.type === 'news' ? 'bg-green-500' :
+                    source.type === 'technical' ? 'bg-orange-500' :
+                    'bg-gray-400'
+                  }`}></div>
+                  
+                  {/* Source Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xs font-medium text-gray-900 truncate">
+                        {source.source}
+                      </span>
+                      <span className="text-xs text-gray-500">•</span>
+                      <span className="text-xs text-gray-500 whitespace-nowrap">
+                        {(() => {
+                          const sourceDate = new Date(source.date);
+                          const today = new Date();
+                          const diffDays = Math.floor((today.getTime() - sourceDate.getTime()) / (24 * 60 * 60 * 1000));
+                          if (diffDays === 0) return 'Today';
+                          if (diffDays === 1) return '1d';
+                          if (diffDays <= 7) return `${diffDays}d`;
+                          return sourceDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                        })()}
+                      </span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <span className="text-xs font-medium uppercase tracking-wider">
-                          {getSourceTypeLabel(source.type)}
-                        </span>
-                        <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                          source.impact === 'positive' ? 'bg-green-100 text-green-700' :
-                          source.impact === 'negative' ? 'bg-red-100 text-red-700' :
-                          'bg-blue-100 text-blue-700'
-                        }`}>
-                          {source.impact === 'positive' ? '+' : source.impact === 'negative' ? '-' : '='}
-                        </span>
-                      </div>
-                      <p className="text-sm font-medium text-gray-900 line-clamp-2 mb-1">
-                        {source.title}
-                      </p>
-                                             <div className="flex items-center justify-between text-xs text-gray-500">
-                         <span>{source.source}</span>
-                         <span>{(() => {
-                           const sourceDate = new Date(source.date);
-                           const today = new Date();
-                           const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
-                           
-                           if (sourceDate.toDateString() === today.toDateString()) {
-                             return 'Today';
-                           } else if (sourceDate.toDateString() === yesterday.toDateString()) {
-                             return 'Yesterday';
-                           } else {
-                             const diffDays = Math.floor((today.getTime() - sourceDate.getTime()) / (24 * 60 * 60 * 1000));
-                             if (diffDays <= 7) {
-                               return `${diffDays}d ago`;
-                             } else {
-                               return sourceDate.toLocaleDateString('en-US', { 
-                                 month: 'short', 
-                                 day: 'numeric' 
-                               });
-                             }
-                           }
-                         })()}</span>
-                       </div>
-                    </div>
+                    <p className="text-xs text-gray-600 truncate mt-0.5">
+                      {source.title.length > 45 ? source.title.substring(0, 45) + '...' : source.title}
+                    </p>
                   </div>
-                  <div className="flex items-center space-x-1 ml-2">
-                    <div className="text-xs font-medium text-gray-600">
-                      {source.confidence}%
-                    </div>
-                    <LinkIcon className="w-3 h-3 text-gray-400" />
-                  </div>
+                </div>
+                
+                {/* Impact & Confidence */}
+                <div className="flex items-center space-x-2 flex-shrink-0">
+                  {/* Simple Impact Indicator */}
+                  <div className={`w-1 h-1 rounded-full ${
+                    source.impact === 'positive' ? 'bg-emerald-500' :
+                    source.impact === 'negative' ? 'bg-red-500' :
+                    'bg-gray-400'
+                  }`}></div>
+                  
+                  {/* Simplified Confidence - just number */}
+                  <span className="text-xs font-medium text-gray-700 tabular-nums group-hover:text-blue-600">
+                    {Math.round(source.confidence)}
+                  </span>
+                  <ArrowTopRightOnSquareIcon className="w-3 h-3 text-gray-400 group-hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-all duration-200 ml-1" />
                 </div>
               </a>
             ))}
+            
+            {/* Show More/Less Button if more than 4 sources */}
+            {data.analysis.sources.length > 4 && (
+              <button 
+                onClick={() => setShowAllSources(!showAllSources)}
+                className="w-full flex items-center justify-center space-x-1 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 py-2 px-3 rounded-lg transition-all duration-200 border border-transparent hover:border-blue-200"
+              >
+                <span>
+                  {showAllSources 
+                    ? 'Show less sources' 
+                    : `View ${data.analysis.sources.length - 4} more sources`
+                  }
+                </span>
+                {showAllSources ? (
+                  <ChevronUpIcon className="w-3 h-3" />
+                ) : (
+                  <ChevronDownIcon className="w-3 h-3" />
+                )}
+              </button>
+            )}
           </div>
-          <div className="text-center">
-            <p className="text-xs text-gray-500">
-              Click any source to view original article or report
-            </p>
+          
+          {/* Clean Summary */}
+          <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-1.5">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                <span className="text-xs font-medium text-gray-900">
+                  {data.analysis.sources.filter(s => s.impact === 'positive').length}
+                </span>
+                <span className="text-xs text-gray-500">bullish</span>
+              </div>
+              {data.analysis.sources.filter(s => s.impact === 'negative').length > 0 && (
+                <div className="flex items-center space-x-1.5">
+                  <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                  <span className="text-xs font-medium text-gray-900">
+                    {data.analysis.sources.filter(s => s.impact === 'negative').length}
+                  </span>
+                  <span className="text-xs text-gray-500">bearish</span>
+                </div>
+              )}
+            </div>
+            
+            <div className="text-right">
+              <span className="text-xs font-semibold text-gray-900 tabular-nums">
+                {Math.round(data.analysis.sources.reduce((sum, s) => sum + s.confidence, 0) / data.analysis.sources.length)}%
+              </span>
+              <span className="text-xs text-gray-500 ml-1">avg</span>
+            </div>
           </div>
         </div>
       )}

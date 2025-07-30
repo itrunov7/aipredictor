@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { ChartBarIcon, SparklesIcon, ArrowTrendingUpIcon as TrendingUpIcon } from '@heroicons/react/24/outline';
 import { ArrowTrendingUpIcon, ArrowTrendingDownIcon } from '@heroicons/react/24/solid';
 import { SignupModal } from './SignupModal';
+import { useApp } from '@/contexts/AppContext';
 
 // Mock market data - updated with current relevant prices
 const mockMarketData = [
@@ -36,6 +37,8 @@ export function HeroSection() {
   const [currentDataIndex, setCurrentDataIndex] = useState(0);
   const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
   const [signupVariant, setSignupVariant] = useState<'free' | 'trial' | 'premium'>('free');
+  const [isVisible, setIsVisible] = useState(false);
+  const { updateLastRefreshed } = useApp();
 
   // Rotate through market data
   useEffect(() => {
@@ -44,6 +47,12 @@ export function HeroSection() {
     }, 3000);
 
     return () => clearInterval(interval);
+  }, []);
+
+  // Scroll animation trigger
+  useEffect(() => {
+    const timer = setTimeout(() => setIsVisible(true), 100);
+    return () => clearTimeout(timer);
   }, []);
 
   const currentStock = mockMarketData[currentDataIndex];
@@ -94,19 +103,22 @@ export function HeroSection() {
           </div>
 
           {/* Main Headline */}
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 animate-fade-in-up">
-            Make Smarter
-            <span className="bg-gradient-to-r from-primary-600 to-blue-600 bg-clip-text text-transparent">
-              {' '}Trading Decisions
+          <h1 className={`text-5xl md:text-7xl font-bold text-gray-900 mb-6 transition-opacity duration-700 ${
+            isVisible ? 'opacity-100' : 'opacity-0'
+          }`}>
+            <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-primary-600 bg-clip-text text-transparent">
+              Know why
             </span>
             <br />
-            with AI Insights
+            <span className="text-gray-900">a stock moves</span>
           </h1>
 
           {/* Subheadline */}
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed animate-fade-in-up">
-            Get AI-powered predictions and real-time analysis for the most interesting S&P 500 stocks. 
-            See next day, week, and month predictions with transparent reasoning and detailed sources.
+          <p className={`text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed transition-opacity duration-700 delay-300 ${
+            isVisible ? 'opacity-100' : 'opacity-0'
+          }`}>
+            Real-time insights from 10 FMP data sources with transparent AI analysis. 
+            Understand the story behind every price movement.
           </p>
 
           {/* Live Market Data Showcase */}
@@ -148,24 +160,26 @@ export function HeroSection() {
           </div>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12 animate-fade-in-up">
+          <div className={`flex flex-col sm:flex-row gap-4 justify-center items-center mb-12 transition-opacity duration-700 delay-500 ${
+            isVisible ? 'opacity-100' : 'opacity-0'
+          }`}>
+            <button 
+              onClick={() => {
+                updateLastRefreshed();
+                document.getElementById('insights')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="btn-primary text-lg px-8 py-3 shadow-lg hover:shadow-xl transition-all duration-300"
+            >
+              See today's free insights →
+            </button>
             <button 
               onClick={() => {
                 setSignupVariant('trial');
                 setIsSignupModalOpen(true);
               }}
-              className="btn-primary text-lg px-8 py-3"
-            >
-              Start Free Trial
-            </button>
-            <button 
-              onClick={() => {
-                // Scroll to insights section
-                document.getElementById('insights')?.scrollIntoView({ behavior: 'smooth' });
-              }}
               className="btn-secondary text-lg px-8 py-3"
             >
-              View Today's Picks
+              Start Free Trial
             </button>
           </div>
 

@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { StockCard } from './StockCard';
+import dynamic from 'next/dynamic';
+import { ClientOnlyStockCards } from './ClientOnlyStockCards';
 import { SparklesIcon, EyeIcon, LockClosedIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { SignupModal } from './SignupModal';
-import { useRealStockData } from '../hooks/useRealStockData';
 
 // Featured stocks to fetch real data for
 const FEATURED_SYMBOLS = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA'];
@@ -15,8 +15,9 @@ export function FreeInsightsSection() {
   const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
   const [signupVariant, setSignupVariant] = useState<'free' | 'trial' | 'premium'>('trial');
 
-  // Fetch real stock data
-  const { data: featuredStocks, loading, error } = useRealStockData(FEATURED_SYMBOLS);
+
+  
+
 
   // Update timestamp every minute to show freshness
   useEffect(() => {
@@ -99,46 +100,7 @@ export function FreeInsightsSection() {
         </div>
 
         {/* Stock Cards Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 mb-16">
-          {loading ? (
-            // Loading skeleton
-            FEATURED_SYMBOLS.map((symbol, index) => (
-              <div 
-                key={symbol}
-                className="animate-fade-in-up glass-card p-6 h-96"
-                style={{ animationDelay: `${index * 150}ms` }}
-              >
-                <div className="animate-pulse">
-                  <div className="h-6 bg-gray-200 rounded mb-4"></div>
-                  <div className="h-8 bg-gray-200 rounded mb-4"></div>
-                  <div className="space-y-3">
-                    <div className="h-4 bg-gray-200 rounded"></div>
-                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                  </div>
-                </div>
-              </div>
-            ))
-          ) : error ? (
-            <div className="col-span-full text-center py-12">
-              <div className="text-red-600 mb-4">
-                <ExclamationTriangleIcon className="w-12 h-12 mx-auto" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Unable to load insights</h3>
-              <p className="text-gray-600">Please try refreshing the page or check back later.</p>
-            </div>
-          ) : (
-            featuredStocks.map((stock, index) => (
-              <div
-                key={stock.symbol}
-                className="animate-fade-in-up"
-                style={{ animationDelay: `${index * 150}ms` }}
-              >
-                <StockCard data={stock} />
-              </div>
-            ))
-          )}
-        </div>
+        <ClientOnlyStockCards />
 
         {/* Premium Upgrade CTA */}
         <div className="bg-gradient-to-br from-primary-50 via-blue-50 to-indigo-50 rounded-3xl p-8 md:p-12 text-center border border-primary-100">
