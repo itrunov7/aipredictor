@@ -11,7 +11,6 @@ import {
   ExclamationTriangleIcon,
   InformationCircleIcon,
   CalendarDaysIcon,
-  ArrowRightIcon,
   ChevronDownIcon
 } from '@heroicons/react/24/outline';
 
@@ -80,17 +79,17 @@ export function EnhancedAIAnalysis({
   };
 
   const getConfidenceColor = (confidence: number) => {
-    if (confidence >= 80) return 'text-green-700 bg-green-50 border-green-200 dark:text-green-300 dark:bg-green-900/20 dark:border-green-800';
-    if (confidence >= 60) return 'text-yellow-700 bg-yellow-50 border-yellow-200 dark:text-yellow-300 dark:bg-yellow-900/20 dark:border-yellow-800';
-    return 'text-red-700 bg-red-50 border-red-200 dark:text-red-300 dark:bg-red-900/20 dark:border-red-800';
+    if (confidence >= 80) return 'text-green-800 bg-green-100 dark:text-green-200 dark:bg-green-900/20';
+    if (confidence >= 60) return 'text-yellow-800 bg-yellow-100 dark:text-yellow-200 dark:bg-yellow-900/20';
+    return 'text-red-800 bg-red-100 dark:text-red-200 dark:bg-red-900/20';
   };
 
   const getRiskColor = (riskLevel: string) => {
     switch (riskLevel.toLowerCase()) {
-      case 'low': return 'text-green-700 bg-green-50 border-green-200 dark:text-green-300 dark:bg-green-900/20 dark:border-green-800';
-      case 'medium': return 'text-yellow-700 bg-yellow-50 border-yellow-200 dark:text-yellow-300 dark:bg-yellow-900/20 dark:border-yellow-800';
-      case 'high': return 'text-red-700 bg-red-50 border-red-200 dark:text-red-300 dark:bg-red-900/20 dark:border-red-800';
-      default: return 'text-gray-700 bg-gray-50 border-gray-200 dark:text-gray-300 dark:bg-gray-900/20 dark:border-gray-800';
+      case 'low': return 'text-green-800 bg-green-100 dark:text-green-200 dark:bg-green-900/20';
+      case 'medium': return 'text-yellow-800 bg-yellow-100 dark:text-yellow-200 dark:bg-yellow-900/20';
+      case 'high': return 'text-red-800 bg-red-100 dark:text-red-200 dark:bg-red-900/20';
+      default: return 'text-gray-800 bg-gray-100 dark:text-gray-200 dark:bg-gray-900/20';
     }
   };
 
@@ -129,24 +128,24 @@ export function EnhancedAIAnalysis({
   const sections = parseAnalysisSections(analysis.reasoning);
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
-      {/* Header with Apple-style gradient */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 px-8 py-6 border-b border-gray-100 dark:border-gray-800">
+    <div className="bg-white dark:bg-black rounded-[28px] shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(255,255,255,0.08)] border border-gray-200/20 dark:border-gray-800/50 overflow-hidden backdrop-blur-xl">
+      {/* Apple-style minimal header */}
+      <div className="px-10 py-8 bg-gradient-to-b from-gray-50/50 to-transparent dark:from-gray-900/50 border-b border-gray-200/30 dark:border-gray-800/30">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-              <SparklesIcon className="w-7 h-7 text-white" />
+          <div className="flex items-center space-x-5">
+            <div className="w-14 h-14 bg-gradient-to-br from-blue-500 via-purple-500 to-blue-600 rounded-[20px] flex items-center justify-center shadow-lg shadow-blue-500/25">
+              <SparklesIcon className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">AI Analysis</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Powered by GPT-4 • {analysis.sources.length} data sources</p>
+              <h3 className="text-[28px] font-semibold text-gray-900 dark:text-white leading-tight tracking-tight">AI Analysis</h3>
+              <p className="text-[15px] text-gray-600 dark:text-gray-400 mt-1">Powered by GPT-4 • {analysis.sources.length} data sources</p>
             </div>
           </div>
           <div className="flex items-center space-x-4">
-            <div className={`px-4 py-2 rounded-full text-sm font-semibold border ${getConfidenceColor(analysis.confidence)}`}>
+            <div className={`px-5 py-2.5 rounded-full text-[13px] font-semibold ${getConfidenceColor(analysis.confidence)}`}>
               {analysis.confidence}% confidence
             </div>
-            <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
+            <div className="flex items-center space-x-2 text-[13px] text-gray-500 dark:text-gray-400">
               <ClockIcon className="w-4 h-4" />
               <span>{getTimeAgo(lastUpdated)}</span>
             </div>
@@ -154,8 +153,8 @@ export function EnhancedAIAnalysis({
         </div>
       </div>
 
-      <div className="p-8 space-y-8">
-        {/* Price Predictions - Apple-style grid */}
+      <div className="px-10 py-8 space-y-10">
+        {/* Apple-style prediction cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
             { label: '24H Target', period: 'nextDay', icon: ClockIcon },
@@ -166,34 +165,34 @@ export function EnhancedAIAnalysis({
             const TrendIcon = getTrendIcon(prediction.changePercent);
             
             return (
-              <div key={period} className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-6 transition-all duration-300 hover:shadow-lg hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-100 dark:border-gray-700">
-                <div className="flex items-center justify-between mb-4">
+              <div key={period} className="bg-gray-50/80 dark:bg-gray-900/40 rounded-[20px] p-6 transition-all duration-300 hover:shadow-lg hover:shadow-gray-200/50 dark:hover:shadow-gray-800/50 hover:bg-gray-100/80 dark:hover:bg-gray-800/60 border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-sm">
+                <div className="flex items-center justify-between mb-5">
                   <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-white dark:bg-gray-700 rounded-xl flex items-center justify-center shadow-sm">
+                    <div className="w-10 h-10 bg-white dark:bg-gray-800 rounded-[14px] flex items-center justify-center shadow-sm">
                       <Icon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                     </div>
-                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">{label}</span>
+                    <span className="text-[15px] font-semibold text-gray-700 dark:text-gray-300">{label}</span>
                   </div>
                   <TrendIcon className={`w-6 h-6 ${getTrendColor(prediction.changePercent)}`} />
                 </div>
                 
-                <div className="space-y-3">
-                  <div className="text-3xl font-bold text-gray-900 dark:text-white">
+                <div className="space-y-4">
+                  <div className="text-[32px] font-semibold text-gray-900 dark:text-white leading-none tracking-tight">
                     {formatCurrency(prediction.price)}
                   </div>
-                  <div className={`text-lg font-semibold ${getTrendColor(prediction.changePercent)}`}>
+                  <div className={`text-[18px] font-semibold ${getTrendColor(prediction.changePercent)}`}>
                     {formatPercent(prediction.changePercent)}
                   </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                  <div className="w-full bg-gray-200/70 dark:bg-gray-700/70 rounded-full h-3">
                     <div 
-                      className={`h-2.5 rounded-full transition-all duration-700 ease-out ${
-                        prediction.confidence >= 80 ? 'bg-green-500' : 
-                        prediction.confidence >= 60 ? 'bg-yellow-500' : 'bg-red-500'
-                      }`}
+                      className={`h-3 rounded-full transition-all duration-700 ease-out ${
+                        prediction.confidence >= 80 ? 'bg-green-500 shadow-green-500/30' : 
+                        prediction.confidence >= 60 ? 'bg-yellow-500 shadow-yellow-500/30' : 'bg-red-500 shadow-red-500/30'
+                      } shadow-lg`}
                       style={{ width: `${prediction.confidence}%` }}
                     />
                   </div>
-                  <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  <div className="text-[14px] font-medium text-gray-600 dark:text-gray-400">
                     {prediction.confidence}% confidence
                   </div>
                 </div>
@@ -202,8 +201,8 @@ export function EnhancedAIAnalysis({
           })}
         </div>
 
-        {/* Analysis Sections - Apple-style expandable cards */}
-        <div className="space-y-3">
+        {/* Apple-style analysis sections */}
+        <div className="space-y-4">
           {[
             { 
               id: 'technical', 
@@ -239,17 +238,17 @@ export function EnhancedAIAnalysis({
             const isExpanded = expandedSection === id;
             
             return (
-              <div key={id} className="border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-all duration-200">
+              <div key={id} className="bg-white dark:bg-gray-900/50 rounded-[20px] overflow-hidden shadow-sm border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-sm">
                 <button
                   onClick={() => setExpandedSection(isExpanded ? null : id)}
-                  className="w-full px-6 py-5 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 flex items-center justify-between group"
+                  className="w-full px-7 py-6 bg-gray-50/50 dark:bg-gray-800/30 hover:bg-gray-100/70 dark:hover:bg-gray-800/50 transition-all duration-200 flex items-center justify-between group"
                 >
                   <div className="flex items-center space-x-4">
-                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm ${
-                      color === 'blue' ? 'bg-blue-100 dark:bg-blue-900/30' :
-                      color === 'green' ? 'bg-green-100 dark:bg-green-900/30' :
-                      color === 'purple' ? 'bg-purple-100 dark:bg-purple-900/30' :
-                      'bg-orange-100 dark:bg-orange-900/30'
+                    <div className={`w-12 h-12 rounded-[16px] flex items-center justify-center shadow-sm backdrop-blur-sm ${
+                      color === 'blue' ? 'bg-blue-100/80 dark:bg-blue-900/40' :
+                      color === 'green' ? 'bg-green-100/80 dark:bg-green-900/40' :
+                      color === 'purple' ? 'bg-purple-100/80 dark:bg-purple-900/40' :
+                      'bg-orange-100/80 dark:bg-orange-900/40'
                     }`}>
                       <Icon className={`w-6 h-6 ${
                         color === 'blue' ? 'text-blue-600 dark:text-blue-400' :
@@ -258,7 +257,7 @@ export function EnhancedAIAnalysis({
                         'text-orange-600 dark:text-orange-400'
                       }`} />
                     </div>
-                    <span className="font-semibold text-gray-900 dark:text-white text-lg">{title}</span>
+                    <span className="text-[19px] font-semibold text-gray-900 dark:text-white">{title}</span>
                   </div>
                   <ChevronDownIcon 
                     className={`w-6 h-6 text-gray-400 transition-transform duration-300 group-hover:text-gray-600 dark:group-hover:text-gray-300 ${
@@ -268,11 +267,9 @@ export function EnhancedAIAnalysis({
                 </button>
                 
                 {isExpanded && (
-                  <div className="px-6 py-6 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
-                    <div className="prose prose-gray dark:prose-invert max-w-none">
-                      <div className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
-                        {content}
-                      </div>
+                  <div className="px-7 py-6 bg-white dark:bg-gray-900/70 border-t border-gray-200/30 dark:border-gray-800/30">
+                    <div className="text-[16px] text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
+                      {content}
                     </div>
                   </div>
                 )}
@@ -283,35 +280,33 @@ export function EnhancedAIAnalysis({
 
         {/* Fallback for unparsed content */}
         {!sections.technical && !sections.fundamental && !sections.catalysts && !sections.risks && (
-          <div className="border border-gray-200 dark:border-gray-700 rounded-2xl p-6 bg-gray-50 dark:bg-gray-800/50">
-            <h4 className="font-semibold text-gray-900 dark:text-white mb-4 text-lg">Complete Analysis</h4>
-            <div className="prose prose-gray dark:prose-invert max-w-none">
-              <div className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
-                {analysis.reasoning}
-              </div>
+          <div className="bg-gray-50/80 dark:bg-gray-900/40 rounded-[20px] p-7 border border-gray-200/50 dark:border-gray-700/50">
+            <h4 className="text-[19px] font-semibold text-gray-900 dark:text-white mb-5">Complete Analysis</h4>
+            <div className="text-[16px] text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
+              {analysis.reasoning}
             </div>
           </div>
         )}
 
-        {/* Trust Indicators - Apple-style footer */}
-        <div className="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
+        {/* Apple-style trust indicators footer */}
+        <div className="flex items-center justify-between pt-6 border-t border-gray-200/30 dark:border-gray-700/30">
           <div className="flex items-center space-x-8">
             <div className="flex items-center space-x-3">
-              <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse shadow-lg" />
-              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Live Data</span>
+              <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse shadow-lg shadow-green-500/40" />
+              <span className="text-[14px] font-medium text-gray-600 dark:text-gray-400">Live Data</span>
             </div>
             <div className="flex items-center space-x-3">
               <ShieldCheckIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">AI Verified</span>
+              <span className="text-[14px] font-medium text-gray-600 dark:text-gray-400">AI Verified</span>
             </div>
             <div className="flex items-center space-x-3">
-              <span className={`px-3 py-1.5 rounded-xl text-xs font-bold border ${getRiskColor(analysis.riskLevel)}`}>
+              <span className={`px-3 py-1.5 rounded-[12px] text-[12px] font-bold ${getRiskColor(analysis.riskLevel)}`}>
                 {analysis.riskLevel.toUpperCase()} RISK
               </span>
             </div>
           </div>
           
-          <div className="text-xs text-gray-500 dark:text-gray-400 font-mono">
+          <div className="text-[12px] text-gray-500 dark:text-gray-400 font-mono opacity-60">
             ID: {symbol}-{new Date(lastUpdated).getTime().toString().slice(-6)}
           </div>
         </div>
