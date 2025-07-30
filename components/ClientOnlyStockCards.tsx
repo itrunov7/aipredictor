@@ -93,7 +93,7 @@ export function ClientOnlyStockCards() {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
         {FEATURED_SYMBOLS.map((symbol, index) => (
           <div
             key={symbol}
@@ -151,7 +151,7 @@ export function ClientOnlyStockCards() {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
       {stocks.map((stock, index) => (
         <div
           key={stock.symbol}
