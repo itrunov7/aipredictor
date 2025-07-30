@@ -1,19 +1,6 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": ".next",
-  "framework": "nextjs",
-  "installCommand": "npm install",
-  "devCommand": "npm run dev",
-  "env": {
-    "NODE_ENV": "production"
-  },
-  "build": {
-    "env": {
-      "NODE_ENV": "production"
-    }
-  },
   "functions": {
-    "app/api/**": {
+    "app/api/**/*.ts": {
       "maxDuration": 60
     }
   },
@@ -32,14 +19,15 @@
         {
           "key": "Access-Control-Allow-Headers",
           "value": "Content-Type, Authorization"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "s-maxage=300, stale-while-revalidate"
         }
       ]
     }
   ],
-  "rewrites": [
-    {
-      "source": "/api/backend/:path*",
-      "destination": "/api/:path*"
-    }
-  ]
+  "env": {
+    "NODE_ENV": "production"
+  }
 } 
