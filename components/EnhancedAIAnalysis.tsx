@@ -48,11 +48,13 @@ export function EnhancedAIAnalysis({
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
 
   const formatCurrency = (amount: number) => {
+    // For whole numbers, show no decimals; for others, show up to 2 decimals but minimize
+    const isWholeNumber = amount % 1 === 0;
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+      minimumFractionDigits: isWholeNumber ? 0 : 0,
+      maximumFractionDigits: isWholeNumber ? 0 : 2,
     }).format(amount);
   };
 
