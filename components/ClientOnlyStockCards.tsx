@@ -89,6 +89,7 @@ export function ClientOnlyStockCards() {
   const [stocks, setStocks] = useState<StockData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   console.log('🔍 ClientOnlyStockCards render - loading:', loading, 'stocks:', stocks.length);
 
@@ -157,6 +158,14 @@ export function ClientOnlyStockCards() {
     }
 
     loadStockData();
+  }, []);
+
+  // Real-time timer updates every minute
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+    return () => clearInterval(timer);
   }, []);
 
   if (loading) {

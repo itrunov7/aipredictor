@@ -1,42 +1,90 @@
 import { NextResponse } from 'next/server';
 
-// Simple in-memory cache for Vercel deployment
-const cache = new Map();
-const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+// Import same rotation logic as scheduler for consistency
+const COMPANY_POOL = [
+  'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META', 'NVDA', 'CRM', 'ORCL', 'ADBE',
+  'JPM', 'BAC', 'WFC', 'GS', 'MS', 'V', 'MA', 'UNH', 'JNJ', 'PFE',
+  'WMT', 'HD', 'PG', 'KO', 'PEP', 'MCD', 'NKE', 'COST', 'XOM', 'CVX'
+];
 
-interface CacheEntry {
-  data: any;
-  timestamp: number;
-}
+const DEFAULT_COMPANIES = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA'];
 
-const FMP_API_KEY = process.env.FMP_API_KEY;
-const FMP_BASE_URL = 'https://financialmodelingprep.com/api/v3';
-
-async function fetchFromFMP(endpoint: string) {
-  const url = `${FMP_BASE_URL}${endpoint}?apikey=${FMP_API_KEY}`;
-  const response = await fetch(url);
+/**
+ * Get current featured companies - same logic as scheduler
+ */
+function getCurrentFeaturedCompanies(): string[] {
+  const now = new Date();
   
-  if (!response.ok) {
-    throw new Error(`FMP API error: ${response.status}`);
+  // Get current date in EST/EDT (where market operates)
+  const easternTime = new Date(now.toLocaleString("en-US", {timeZone: "America/New_York"}));
+  
+  // Calculate day of year for rotation seed
+  const startOfYear = new Date(easternTime.getFullYear(), 0, 1);
+  const dayOfYear = Math.floor((easternTime.getTime() - startOfYear.getTime()) / 86400000) + 1;
+  
+  // Use day of year as rotation seed for deterministic selection
+  const selectedCompanies: string[] = [];
+  const usedIndices = new Set<number>();
+  
+  // Select 5 unique companies using deterministic algorithm
+  for (let i = 0; i < 5; i++) {
+    let attempts = 0;
+    let index: number;
+    
+    do {
+      // Create deterministic but varied selection (same algorithm as scheduler)
+      const seedBase = dayOfYear + i * 37 + attempts * 13;
+      index = seedBase % COMPANY_POOL.length;
+      attempts++;
+    } while (usedIndices.has(index) && attempts < COMPANY_POOL.length);
+    
+    if (!usedIndices.has(index)) {
+      usedIndices.add(index);
+      selectedCompanies.push(COMPANY_POOL[index]);
+    }
   }
   
-  return response.json();
+  // Ensure we have exactly 5 companies
+  while (selectedCompanies.length < 5) {
+    for (const company of DEFAULT_COMPANIES) {
+      if (!selectedCompanies.includes(company) && selectedCompanies.length < 5) {
+        selectedCompanies.push(company);
+      }
+    }
+  }
+  
+  return selectedCompanies.slice(0, 5);
 }
 
-function getCachedData(key: string): any | null {
-  const entry = cache.get(key) as CacheEntry;
-  if (entry && (Date.now() - entry.timestamp) < CACHE_TTL) {
-    return entry.data;
+// Mock function for FMP API (for demo purposes)
+function fetchFromFMP(endpoint: string): Promise<any[]> {
+  return new Promise((resolve) => {
+    // Simulate API delay
+    setTimeout(() => {
+      const symbol = endpoint.split('/').pop();
+      resolve([{
+        symbol,
+        name: `${symbol} Corporation`,
+        price: 150 + Math.random() * 200,
+        changesPercentage: (Math.random() - 0.5) * 10
+      }]);
+    }, 100);
+  });
+}
+
+// Simple in-memory cache
+const cache = new Map<string, { data: any; timestamp: number }>();
+
+function getCachedData(key: string): any {
+  const cached = cache.get(key);
+  if (cached && Date.now() - cached.timestamp < 24 * 60 * 60 * 1000) { // 24 hour cache
+    return cached.data;
   }
-  cache.delete(key);
   return null;
 }
 
 function setCachedData(key: string, data: any): void {
-  cache.set(key, {
-    data,
-    timestamp: Date.now()
-  });
+  cache.set(key, { data, timestamp: Date.now() });
 }
 
 export async function GET() {
@@ -55,8 +103,9 @@ export async function GET() {
       });
     }
 
-    // Featured stock symbols (most interesting companies)
-    const symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA'];
+    // Get today's featured symbols from rotation algorithm
+    const symbols = getCurrentFeaturedCompanies();
+    console.log(`📊 Fetching data for today's featured companies: ${symbols.join(', ')}`);
     
     // Fetch data for all symbols in parallel
     const stockPromises = symbols.map(symbol => 
@@ -86,7 +135,8 @@ export async function GET() {
       data: stocks,
       count: stocks.length,
       cached: false,
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
+      featuredSymbols: symbols
     });
 
   } catch (error: any) {
